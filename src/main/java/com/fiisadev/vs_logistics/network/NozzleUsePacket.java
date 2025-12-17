@@ -1,7 +1,9 @@
 package com.fiisadev.vs_logistics.network;
 
-import com.fiisadev.vs_logistics.content.fluid_pump.FluidPumpUtils;
+import com.fiisadev.vs_logistics.content.fluid_pump.FluidPumpBlockEntity;
+import com.fiisadev.vs_logistics.content.fluid_pump.FluidPumpPlayerDataProvider;
 import com.fiisadev.vs_logistics.event.NozzleUseHandler;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.network.NetworkEvent;
@@ -38,7 +40,9 @@ public class NozzleUsePacket {
             NozzleUseHandler.set(player.getUUID(), isKeyDown);
 
             if (dropNozzle) {
-                FluidPumpUtils.dropNozzle(player);
+                player.getCapability(FluidPumpPlayerDataProvider.FLUID_PUMP_PLAYER_DATA).ifPresent((playerData) -> {
+                    FluidPumpBlockEntity.withBlockEntityDo(player.level(), playerData.getFluidPumpPos(), FluidPumpBlockEntity::breakHose);
+                });
             }
         });
 

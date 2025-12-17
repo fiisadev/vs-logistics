@@ -17,10 +17,6 @@ public class HoseUtils {
     public static final int RADIAL_SEGMENTS = 8;
     public static final float RADIUS = 0.05f;
 
-    private static boolean isSlimModel(Player player) {
-        return player instanceof AbstractClientPlayer ap && "slim".equals(ap.getModelName());
-    }
-
     public static Vec3 getNozzleHandlePosition(Player player, float partialTicks){
         Minecraft minecraft = Minecraft.getInstance();
         float bodyRotation = player.yBodyRotO + (player.yBodyRot - player.yBodyRotO) * partialTicks;
@@ -30,13 +26,13 @@ public class HoseUtils {
             return new Vec3(-0.5, 1, -3).yRot((float)Math.toRadians(-bodyRotation));
         }
 
-        Vec3 nozzlePos = new Vec3(-0.37, 0.775, -0.03);
+        Vec3 nozzlePos = new Vec3(-0.38, 0.783, -0.03);
 
-        if(isSlimModel(player))
+        if(player instanceof AbstractClientPlayer ap && "slim".equals(ap.getModelName()))
             nozzlePos = nozzlePos.add(0.03, -0.03, 0.0);
 
-        if (player.isShiftKeyDown())
-            nozzlePos = nozzlePos.add(0, -0.35, 0.15);
+        if (player.isCrouching())
+            nozzlePos = nozzlePos.add(0, -0.33, 0);
 
         return nozzlePos.yRot((float)Math.toRadians(-bodyRotation));
     }
@@ -114,49 +110,6 @@ public class HoseUtils {
         centers = smoothed;
 
         return centers;
-    }
-
-    public static Vec3[] generateHoseSegments(Player player, FluidPumpBlockEntity fluidPump) {
-        float partialTicks = Minecraft.getInstance().getPartialTick();
-
-        Vec3 hoseEndPos = player
-                .getPosition(partialTicks)
-                .add(HoseUtils.getNozzleHandlePosition(player, partialTicks));
-
-        Vector3f startDirVF = fluidPump.getBlockState().getValue(FluidPumpBlock.FACING).step().normalize();
-        Vec3 startDir = new Vec3(startDirVF.x, startDirVF.y, startDirVF.z);
-        Vec3 endDir = HoseUtils.getNozzleHandleDir(player, partialTicks);
-
-        Vec3 hoseStartPos = fluidPump
-                .getBlockPos()
-                .getCenter()
-                .add(new Vec3(0, 0, 1).yRot(-(float)Math.toRadians(fluidPump.getBlockState().getValue(FluidPumpBlock.FACING).toYRot())).scale((7 / 8f) * 0.5))
-                .add(0, -0.5 + 5 / 16f, 0);
-
-        double dist = hoseStartPos.distanceTo(hoseEndPos);
-
-        Vec3 p1 = hoseStartPos.add(startDir.scale(dist * 0.3f));
-        Vec3 p2 = hoseEndPos.subtract(endDir.scale(dist * 0.3f));
-
-        return generateHoseSegments(hoseStartPos, hoseEndPos, p1, p2, dist);
-    }
-
-    public static Vec3[] generateHoseSegments(Player player, Vec3 start) {
-        float partialTicks = Minecraft.getInstance().getPartialTick();
-
-        Vec3 hoseEndPos = player
-                .getPosition(partialTicks)
-                .add(HoseUtils.getNozzleHandlePosition(player, partialTicks));
-
-        Vec3 startDir = player.position().subtract(start);
-        Vec3 endDir = HoseUtils.getNozzleHandleDir(player, partialTicks);
-
-        double dist = start.distanceTo(hoseEndPos);
-
-        Vec3 p1 = start.add(startDir.scale(dist * 0.3f));
-        Vec3 p2 = hoseEndPos.subtract(endDir.scale(dist * 0.3f));
-
-        return generateHoseSegments(start, hoseEndPos, p1, p2, dist);
     }
 }
 

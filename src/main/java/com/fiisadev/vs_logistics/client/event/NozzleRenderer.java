@@ -46,9 +46,9 @@ public class NozzleRenderer {
             PoseStack poseStack = event.getPoseStack();
 
             poseStack.pushPose();
-            poseStack.translate(1.4, -0.65, -1.7);
-            poseStack.mulPose(Axis.YP.rotationDegrees(-83));
-            poseStack.mulPose(Axis.ZP.rotationDegrees(-27));
+            poseStack.translate(1.4, -1, -1.7);
+            poseStack.mulPose(Axis.YP.rotationDegrees(7));
+            poseStack.mulPose(Axis.XP.rotationDegrees(22.5f));
             poseStack.scale(1.6f, 1.6f, 1.6f);
 
             if (startUsingTime == 0 && InputEvent.isUseHeld) {
@@ -101,12 +101,15 @@ public class NozzleRenderer {
             Vec3 pos = HoseUtils.getNozzleHandlePosition(player, event.getPartialTick());
             ps.translate(pos.x, pos.y, pos.z);
 
-            float bodyRotation = player.yBodyRotO + (player.yBodyRot - player.yBodyRotO) * event.getPartialTick();
-            ps.mulPose(Axis.YP.rotationDegrees(-bodyRotation + 90));
-            ps.mulPose(Axis.ZP.rotationDegrees(-27));
 
-            ModelPart arm = event.getRenderer().getModel().leftArm;
-            ps.translate(arm.x / 16f - 0.67f, arm.y / 16f + 0.1f, arm.z / 16f - 0.06f);
+            float bodyRotation = player.yBodyRotO + (player.yBodyRot - player.yBodyRotO) * event.getPartialTick();
+            ps.mulPose(Axis.YN.rotationDegrees(bodyRotation + 180));
+            ps.mulPose(Axis.XP.rotationDegrees(22.5f));
+
+            if (player.isCrouching())
+                ps.translate(0, 0.13, -0.06);
+
+            ps.translate(0, -0.03, -0.3);
 
             ItemStack nozzle = new ItemStack(LogisticsItems.NOZZLE.get());
             BakedModel baked = itemRenderer.getModel(nozzle, player.level(), null, 0);

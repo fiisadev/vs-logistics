@@ -1,7 +1,7 @@
 package com.fiisadev.vs_logistics.content.fluid_port;
 
+import com.fiisadev.vs_logistics.content.fluid_pump.*;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
-import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.fluid.SmartFluidTank;
@@ -9,6 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -30,6 +31,16 @@ public class FluidPortBlockEntity extends SmartBlockEntity implements IHaveGoggl
     private final SmartFluidTank fluidTank = new SmartFluidTank(8000, this::onFluidStackChange);
     private final LazyOptional<IFluidHandler> fluidCapability = LazyOptional.of(() -> fluidTank);
 
+    private BlockPos fluidPumpPos;
+
+    public BlockPos getFluidPumpPos() {
+        return fluidPumpPos;
+    }
+
+    public void setFluidPump(FluidPumpBlockEntity fluidPump) {
+        this.fluidPumpPos = fluidPump != null ? fluidPump.getBlockPos() : null;
+    }
+
     public FluidPortBlockEntity(BlockEntityType<?> pType, BlockPos pPos, BlockState pBlockState) {
         super(pType, pPos, pBlockState);
     }
@@ -45,12 +56,41 @@ public class FluidPortBlockEntity extends SmartBlockEntity implements IHaveGoggl
         return shipA.getId() == shipB.getId();
     }
 
+    public void onUse(Player player) {
+        if (level == null)
+            return;
+
+        player.getCapability(FluidPumpPlayerDataProvider.FLUID_PUMP_PLAYER_DATA).ifPresent((playerData) -> {
+            if (fluidPumpPos != null && playerData.getFluidPumpPos() == null) {
+                FluidPumpBlockEntity.withBlockEntityDo(level, fluidPumpPos, (fluidPump) -> {
+                    fluidPump.setUserInfo(new PlayerUserInfo(fluidPump, player));
+                });
+
+                fluidPumpPos = null;
+                notifyUpdate();
+                return;
+            }
+
+            if (fluidPumpPos == null && playerData.getFluidPumpPos() != null) {
+                if (level.getBlockEntity(playerData.getFluidPumpPos()) instanceof FluidPumpBlockEntity fluidPump) {
+                    fluidPumpPos = playerData.getFluidPumpPos();
+                    fluidPump.setUserInfo(new FluidPortUserInfo(fluidPump, this));
+                }
+            }
+        });
+    }
+
     public void setTarget(@Nullable BlockPos pos) {
         this.target = pos;
     }
 
-    public SmartFluidTank getFluidTank() {
-        return fluidTank;
+    public IFluidHandler getFirstTank() {
+        IFluidHandler targetTank = getTargetTank().orElse(null);
+
+        if (targetTank == null)
+            return fluidTank;
+
+        return targetTank;
     }
 
     public Optional<IFluidHandler> getTargetTank() {
@@ -88,16 +128,26 @@ public class FluidPortBlockEntity extends SmartBlockEntity implements IHaveGoggl
 
     @Override
     protected void read(CompoundTag tag, boolean clientPacket) {
+        super.read(tag, clientPacket);
+
         if (tag.contains("Target"))
             target = BlockPos.of(tag.getLong("Target"));
-        super.read(tag, clientPacket);
+
+        if (tag.contains("FluidPumpPos"))
+            fluidPumpPos = BlockPos.of(tag.getLong("FluidPumpPos"));
+        else
+            fluidPumpPos = null;
     }
 
     @Override
     protected void write(CompoundTag tag, boolean clientPacket) {
+        super.write(tag, clientPacket);
+
         if (target != null)
             tag.putLong("Target", target.asLong());
-        super.write(tag, clientPacket);
+
+        if (fluidPumpPos != null)
+            tag.putLong("FluidPumpPos", fluidPumpPos.asLong());
     }
 
     @Override

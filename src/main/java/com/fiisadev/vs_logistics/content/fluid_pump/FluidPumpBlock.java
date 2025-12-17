@@ -55,11 +55,39 @@ public class FluidPumpBlock extends HorizontalDirectionalBlock implements IBE<Fl
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (!level.isClientSide) {
             withBlockEntityDo(level, pos, (be) -> {
-                be.onUse(player);
+                IUserInfo userInfo = be.getUserInfo();
+
+                if (userInfo != null && !userInfo.is(player)) return;
+
+                player.getCapability(FluidPumpPlayerDataProvider.FLUID_PUMP_PLAYER_DATA).ifPresent((playerData) -> {
+                    BlockPos fluidPumpPos = playerData.getFluidPumpPos();
+
+                    if (fluidPumpPos == null) {
+                        be.setUserInfo(new PlayerUserInfo(be, player));
+                        return;
+                    }
+
+                    if (fluidPumpPos.equals(pos))
+                        be.setUserInfo(null);
+                });
             });
         }
 
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        withBlockEntityDo(level, pos, (be) -> {
+            IUserInfo userInfo = be.getUserInfo();
+
+            if (userInfo == null)
+                return;
+
+            be.breakHose();
+        });
+
+        super.onRemove(state, level, pos, newState, movedByPiston);
     }
 
     @Override

@@ -6,16 +6,12 @@ import com.fiisadev.vs_logistics.content.fluid_pump.FluidPumpBlockEntity;
 import com.fiisadev.vs_logistics.content.fluid_pump.FluidPumpPlayerDataProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fluids.FluidStack;
@@ -36,6 +32,8 @@ public class NozzleUseHandler {
         keyHeld.put(playerId, value);
     }
 
+    public static boolean isNozzleKeyDown(UUID playerId) { return keyHeld.getOrDefault(playerId, false); }
+
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
@@ -45,45 +43,6 @@ public class NozzleUseHandler {
             handle(player, player.level());
         }
     }
-
-    private static void pushFluid(IFluidHandler from, IFluidHandler to) {
-        // TODO config pump rate
-        FluidStack simulatedExtract = from.drain(60, IFluidHandler.FluidAction.SIMULATE);
-        if (simulatedExtract.isEmpty()) return;
-
-        int accepted = to.fill(simulatedExtract, IFluidHandler.FluidAction.SIMULATE);
-        if (accepted <= 0) return;
-
-        FluidStack realExtract = from.drain(accepted, IFluidHandler.FluidAction.EXECUTE);
-        if (realExtract.isEmpty()) return;
-
-        to.fill(realExtract, IFluidHandler.FluidAction.EXECUTE);
-    }
-
-    private static void pullFluid(FluidPortBlockEntity fluidPort, IFluidHandler to) {
-        IFluidHandler source;
-
-        if (!fluidPort.getFluidTank().getFluid().isEmpty()) {
-            source = fluidPort.getFluidTank();
-        } else {
-            source = fluidPort.getTargetTank().orElse(null);
-        }
-
-        if (source == null) return;
-
-        // TODO config pump rate
-        FluidStack simulatedExtract = source.drain(60, IFluidHandler.FluidAction.SIMULATE);
-        if (simulatedExtract.isEmpty()) return;
-
-        int accepted = to.fill(simulatedExtract, IFluidHandler.FluidAction.SIMULATE);
-        if (accepted <= 0) return;
-
-        FluidStack realExtract = source.drain(accepted, IFluidHandler.FluidAction.EXECUTE);
-        if (realExtract.isEmpty()) return;
-
-        to.fill(realExtract, IFluidHandler.FluidAction.EXECUTE);
-    }
-
 
     private static void handle(Player player, Level level) {
         if (!keyHeld.getOrDefault(player.getUUID(), false))
@@ -95,19 +54,7 @@ public class NozzleUseHandler {
             if (fluidPumpPos == null) return;
             if (!(level.getBlockEntity(fluidPumpPos) instanceof FluidPumpBlockEntity fluidPump)) return;
 
-            HitResult result = player.pick(5f, 0f, true);
 
-            if (result instanceof BlockHitResult hit) {
-                if (!(level.getBlockEntity(hit.getBlockPos()) instanceof FluidPortBlockEntity fluidPort)) return;
-                if (!fluidPort.isValid()) return;
-
-                switch (fluidPump.getMode()) {
-                    case PUSH ->
-                        pushFluid(fluidPump.getFluidTank(), fluidPort.getFluidTank());
-                    case PULL ->
-                        pullFluid(fluidPort, fluidPump.getFluidTank());
-                }
-            }
         });
     }
 
@@ -130,7 +77,13 @@ public class NozzleUseHandler {
 
     @SubscribeEvent
     public static void onRightClick(PlayerInteractEvent.RightClickBlock event) {
-        if (event.getLevel().getBlockEntity(event.getPos()) instanceof FluidPumpBlockEntity) return;
+        BlockEntity be = event.getLevel().getBlockEntity(event.getPos());
+
+        if (
+            be instanceof FluidPumpBlockEntity
+            || be instanceof FluidPortBlockEntity
+        )
+            return;
 
         if (preventEvent(event.getEntity())) {
             event.getEntity().stopUsingItem();
