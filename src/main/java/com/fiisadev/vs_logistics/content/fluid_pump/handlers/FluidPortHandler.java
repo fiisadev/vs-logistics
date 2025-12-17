@@ -67,6 +67,18 @@ public record FluidPortHandler(FluidPumpBlockEntity fluidPump, FluidPortBlockEnt
         fluidPort.setFluidPumpPos(null);
     }
 
+    public void tick() {
+        Vec3 pos = fluidPort.getBlockPos().getCenter();
+
+        if (VSGameUtilsKt.getShipManagingPos(fluidPort.getLevel(), fluidPort.getBlockPos()) != null) {
+            pos = VSGameUtilsKt.toWorldCoordinates(fluidPort.getLevel(), fluidPort.getBlockPos().getCenter());
+        }
+
+        if (pos.distanceToSqr(fluidPump.getBlockPos().getCenter()) > Math.pow(24, 2)) {
+            fluidPump.breakHose();
+        }
+    }
+
     public static FluidPortHandler from(FluidPumpBlockEntity fluidPump, String id, Level level) {
         return level.getBlockEntity(BlockPos.of(Long.parseLong(id))) instanceof FluidPortBlockEntity be ? new FluidPortHandler(fluidPump, be) : null;
     }
