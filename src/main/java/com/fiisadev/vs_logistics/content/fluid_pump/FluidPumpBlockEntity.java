@@ -193,6 +193,8 @@ public class FluidPumpBlockEntity extends SmartBlockEntity implements IHaveGoggl
     protected void write(CompoundTag tag, boolean clientPacket) {
         super.write(tag, clientPacket);
 
+        tag.put("FluidStack", fluidTank.writeToNBT(new CompoundTag()));
+
         if (pumpHandler != null) {
             pumpHandler.write(tag);
         }
@@ -202,16 +204,14 @@ public class FluidPumpBlockEntity extends SmartBlockEntity implements IHaveGoggl
     protected void read(CompoundTag tag, boolean clientPacket) {
         super.read(tag, clientPacket);
 
+        fluidTank.readFromNBT(tag.getCompound("FluidStack"));
+
         if (tag.contains("UserType")) {
             switch (tag.getString("UserType")) {
                 case "PLAYER":
                     setPumpHandler(new PlayerHandler(this, UUID.fromString(tag.getString("UserId"))));
-                    break;
                 case "NOZZLE":
                     setPumpHandler(new FluidPortHandler(this, BlockPos.of(Long.parseLong(tag.getString("UserId")))));
-                    break;
-                default:
-                    break;
             }
         } else {
             setPumpHandler(null);
