@@ -52,7 +52,7 @@ public record PlayerHandler(FluidPumpBlockEntity fluidPump, Player player) imple
         if (result instanceof BlockHitResult hit) {
             BlockEntity be = player.level().getBlockEntity(hit.getBlockPos());
 
-            return Optional.ofNullable(be instanceof FluidPortBlockEntity fluidPort ? fluidPort.getFirstTank() : null);
+            return Optional.ofNullable(be instanceof FluidPortBlockEntity fluidPort ? fluidPort.getFluidHandler() : null);
         }
 
         return Optional.empty();

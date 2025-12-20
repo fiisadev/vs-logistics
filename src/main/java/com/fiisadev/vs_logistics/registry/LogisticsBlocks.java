@@ -2,7 +2,6 @@ package com.fiisadev.vs_logistics.registry;
 
 import com.fiisadev.vs_logistics.VSLogistics;
 import com.fiisadev.vs_logistics.content.fluid_port.FluidPortBlock;
-import com.fiisadev.vs_logistics.content.fluid_port.FluidPortItem;
 import com.fiisadev.vs_logistics.content.fluid_pump.FluidPumpBlock;
 import com.simibubi.create.foundation.data.BlockStateGen;
 import com.simibubi.create.foundation.data.CreateRegistrate;
@@ -25,7 +24,7 @@ public class LogisticsBlocks {
             .properties(BlockBehaviour.Properties::requiresCorrectToolForDrops)
             .transform(axeOrPickaxe())
             .blockstate(BlockStateGen.directionalBlockProvider(true))
-            .item(FluidPortItem::new)
+            .item()
             .transform(customItemModel())
             .register();
 

@@ -52,11 +52,11 @@ public record FluidPortHandler(FluidPumpBlockEntity fluidPump, FluidPortBlockEnt
     }
 
     public void pushFluid() {
-        fluidPump.pushFluid(fluidPort.getFirstTank());
+        fluidPump.pushFluid(fluidPort.getFluidHandler());
     }
 
     public void pullFluid() {
-        fluidPump.pullFluid(fluidPort.getFirstTank());
+        fluidPump.pullFluid(fluidPort.getFluidHandler());
     }
 
     public void onStartUsing() {

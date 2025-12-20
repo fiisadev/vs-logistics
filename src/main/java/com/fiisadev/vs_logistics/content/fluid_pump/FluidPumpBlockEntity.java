@@ -244,6 +244,7 @@ public class FluidPumpBlockEntity extends SmartBlockEntity {
     }
 
     public static void withBlockEntityDo(BlockGetter level, BlockPos pos, Consumer<FluidPumpBlockEntity> action) {
+        if (pos == null || level == null) return;
         Optional.ofNullable(level.getBlockEntity(pos)).ifPresent((be) -> {
             if (be instanceof FluidPumpBlockEntity fluidPump) {
                 action.accept(fluidPump);

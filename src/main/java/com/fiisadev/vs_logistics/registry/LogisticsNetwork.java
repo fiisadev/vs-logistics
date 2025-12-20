@@ -1,6 +1,7 @@
 package com.fiisadev.vs_logistics.registry;
 
 import com.fiisadev.vs_logistics.VSLogistics;
+import com.fiisadev.vs_logistics.network.FluidPortPacket;
 import com.fiisadev.vs_logistics.network.SyncFluidPumpPlayerCapPacket;
 import com.fiisadev.vs_logistics.network.FluidPumpUsePacket;
 import net.minecraftforge.network.NetworkRegistry;
@@ -34,6 +35,14 @@ public class LogisticsNetwork {
                 FluidPumpUsePacket::toBytes,
                 FluidPumpUsePacket::new,
                 FluidPumpUsePacket::handle
+        );
+
+        CHANNEL.registerMessage(
+                id++,
+                FluidPortPacket.class,
+                FluidPortPacket::toBytes,
+                FluidPortPacket::new,
+                FluidPortPacket::handle
         );
     }
 }
