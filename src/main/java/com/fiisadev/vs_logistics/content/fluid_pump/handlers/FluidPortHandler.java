@@ -17,6 +17,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 public record FluidPortHandler(FluidPumpBlockEntity fluidPump, BlockPos fluidPortPos) implements IFluidPumpHandler {
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof FluidPortHandler handler && fluidPortPos.equals(handler.fluidPortPos) && fluidPump.getBlockPos().equals(handler.fluidPump.getBlockPos());
+    }
+
     public boolean is(Object object) { return object instanceof FluidPortBlockEntity fluidPort && fluidPort.getBlockPos().equals(fluidPortPos); }
 
     public void write(CompoundTag tag) {
@@ -106,13 +111,10 @@ public record FluidPortHandler(FluidPumpBlockEntity fluidPump, BlockPos fluidPor
 
     public void tick() {
         withFluidPortDo((fluidPort) -> {
-            Vec3 pos = fluidPort.getBlockPos().getCenter();
+            Vec3 fluidPumpPos = VSGameUtilsKt.toWorldCoordinates(fluidPump.getLevel(), fluidPump.getBlockPos().getCenter());
+            Vec3 fluidPortPos = VSGameUtilsKt.toWorldCoordinates(fluidPump.getLevel(), fluidPort.getBlockPos());
 
-            if (VSGameUtilsKt.getShipManagingPos(fluidPort.getLevel(), fluidPort.getBlockPos()) != null) {
-                pos = VSGameUtilsKt.toWorldCoordinates(fluidPort.getLevel(), fluidPort.getBlockPos().getCenter());
-            }
-
-            if (pos.distanceToSqr(fluidPump.getBlockPos().getCenter()) > Math.pow(24, 2)) {
+            if (fluidPumpPos.distanceToSqr(fluidPortPos) > Math.pow(24, 2)) {
                 fluidPump.breakHose();
             }
         });

@@ -1,6 +1,7 @@
 package com.fiisadev.vs_logistics.registry;
 
 import com.fiisadev.vs_logistics.VSLogistics;
+import com.fiisadev.vs_logistics.network.BreakHosePacket;
 import com.fiisadev.vs_logistics.network.FluidPortPacket;
 import com.fiisadev.vs_logistics.network.SyncFluidPumpPlayerCapPacket;
 import com.fiisadev.vs_logistics.network.FluidPumpUsePacket;
@@ -43,6 +44,14 @@ public class LogisticsNetwork {
                 FluidPortPacket::toBytes,
                 FluidPortPacket::new,
                 FluidPortPacket::handle
+        );
+
+        CHANNEL.registerMessage(
+                id++,
+                BreakHosePacket.class,
+                BreakHosePacket::toBytes,
+                BreakHosePacket::new,
+                BreakHosePacket::handle
         );
     }
 }

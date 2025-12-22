@@ -1,10 +1,11 @@
 package com.fiisadev.vs_logistics.content.fluid_pump;
 
 import com.fiisadev.vs_logistics.client.utils.HoseUtils;
-import com.fiisadev.vs_logistics.content.fluid_port.FluidPortBlockEntity;
 import com.fiisadev.vs_logistics.content.fluid_pump.handlers.FluidPortHandler;
 import com.fiisadev.vs_logistics.content.fluid_pump.handlers.PlayerHandler;
+import com.fiisadev.vs_logistics.network.BreakHosePacket;
 import com.fiisadev.vs_logistics.registry.LogisticsIcons;
+import com.fiisadev.vs_logistics.registry.LogisticsNetwork;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
@@ -25,9 +26,10 @@ import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -40,8 +42,11 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3d;
+import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 import java.util.List;
 import java.util.Optional;
@@ -53,13 +58,19 @@ public class FluidPumpBlockEntity extends SmartBlockEntity implements IHaveGoggl
         super(type, pos, state);
     }
 
+    private static final int SYNC_RATE = 8;
+    protected int syncCooldown;
+    protected boolean queuedSync;
+
     private @Nullable IFluidPumpHandler pumpHandler;
 
     public @Nullable IFluidPumpHandler getPumpHandler() {
         return pumpHandler;
     }
 
-    public void setPumpHandler(IFluidPumpHandler pumpHandler) {
+    public void setPumpHandler(IFluidPumpHandler pumpHandler, boolean sendData) {
+        if ((this.pumpHandler != null && this.pumpHandler.equals(pumpHandler)) || (this.pumpHandler == null && pumpHandler == null)) return;
+
         if (this.pumpHandler != null)
             this.pumpHandler.onStopUsing();
 
@@ -68,7 +79,8 @@ public class FluidPumpBlockEntity extends SmartBlockEntity implements IHaveGoggl
         if (this.pumpHandler != null)
             this.pumpHandler.onStartUsing();
 
-        notifyUpdate();
+        if (sendData)
+            sendDataImmediately();
     }
 
     private final SmartFluidTank fluidTank = new SmartFluidTank(8000, this::onFluidStackChange);
@@ -83,6 +95,34 @@ public class FluidPumpBlockEntity extends SmartBlockEntity implements IHaveGoggl
         return super.getCapability(cap, side);
     }
 
+    public Vec3 getHoseStart() {
+        Level level = getLevel();
+        BlockPos blockPos = getBlockPos();
+        Direction facing = getBlockState().getValue(FluidPumpBlock.FACING);
+
+        Vec3 pos = blockPos.getCenter().add(Vec3.atLowerCornerOf(facing.getNormal()).scale(0.5f)).add(0, -0.5 + 5 / 16f, 0);
+
+        if (VSGameUtilsKt.getShipManagingPos(level, blockPos) != null)
+            return VSGameUtilsKt.toWorldCoordinates(level, pos);
+
+        return pos;
+    }
+
+    public Vec3 getHoseDir() {
+        BlockPos blockPos = getBlockPos();
+        Direction facing = getBlockState().getValue(FluidPumpBlock.FACING);
+
+        Vec3 dir = Vec3.atLowerCornerOf(facing.getNormal());
+
+        var ship = VSGameUtilsKt.getShipManagingPos(getLevel(), blockPos);
+        if (ship != null) {
+            Vector3d worldDir = ship.getTransform().getShipToWorldRotation().transform(new Vector3d(dir.x, dir.y, dir.z));
+            return new Vec3(worldDir.x, worldDir.y, worldDir.z).normalize();
+        }
+
+        return dir.normalize();
+    }
+
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
@@ -90,8 +130,10 @@ public class FluidPumpBlockEntity extends SmartBlockEntity implements IHaveGoggl
     }
 
     private void onFluidStackChange(FluidStack fluidStack) {
-        if (level != null && !level.isClientSide)
-            notifyUpdate();
+        if (level != null && !level.isClientSide) {
+            sendData();
+            setChanged();
+        }
     }
 
     private ScrollOptionBehaviour<PumpMode> pumpMode;
@@ -108,37 +150,21 @@ public class FluidPumpBlockEntity extends SmartBlockEntity implements IHaveGoggl
     }
 
     public void breakHose() {
-        if (level == null) return;
+        if (level instanceof ServerLevel) {
+            if (pumpHandler == null)
+                return;
 
-        if (pumpHandler == null)
-            return;
+            LogisticsNetwork.CHANNEL.send(
+                PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(getBlockPos())),
+                new BreakHosePacket(
+                    getHoseStart(),
+                    pumpHandler.getHoseEnd(0),
+                    getHoseDir(),
+                    pumpHandler.getHoseDir(0)
+                )
+            );
 
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-            Direction facing = getBlockState().getValue(FluidPumpBlock.FACING);
-
-            Vec3 center = getBlockPos().getCenter();
-            Vec3 pumpPos = center.relative(facing, 0.5).add(0, -0.5 + 5 / 16f, 0);
-            Vec3 userPos = pumpHandler.getHoseEnd(Minecraft.getInstance().getPartialTick());
-
-            double dist = pumpPos.distanceTo(userPos);
-
-            Vec3 p1 = pumpPos.add(new Vec3(facing.getStepX(), facing.getStepY(), facing.getStepZ()).scale(dist * 0.3f));
-            Vec3 p2 = userPos.subtract(pumpHandler.getHoseDir(Minecraft.getInstance().getPartialTick()).scale(dist * 0.3f));
-
-            Vec3[] segments = HoseUtils.generateHoseSegments(pumpPos, userPos, p1, p2, dist);
-
-            Minecraft.getInstance().player.playSound(SoundEvents.WOOL_PLACE, 1.0f, 1.0f);
-            for (Vec3 segment : segments) {
-                Minecraft.getInstance().level.addParticle(
-                        new BlockParticleOption(ParticleTypes.BLOCK, Blocks.BLACK_WOOL.defaultBlockState()),
-                        segment.x, segment.y, segment.z,
-                        0, 0.05f, 0
-                );
-            }
-        });
-
-        if (!level.isClientSide) {
-            setPumpHandler(null);
+            setPumpHandler(null, true);
         }
     }
 
@@ -171,6 +197,12 @@ public class FluidPumpBlockEntity extends SmartBlockEntity implements IHaveGoggl
     @Override
     public void tick() {
         super.tick();
+
+        if (syncCooldown > 0) {
+            syncCooldown--;
+            if (syncCooldown == 0 && queuedSync)
+                sendData();
+        }
 
         if (level == null || level.isClientSide) return;
         if (pumpHandler == null) return;
@@ -208,17 +240,34 @@ public class FluidPumpBlockEntity extends SmartBlockEntity implements IHaveGoggl
         if (tag.contains("UserType")) {
             switch (tag.getString("UserType")) {
                 case "PLAYER":
-                    setPumpHandler(new PlayerHandler(this, UUID.fromString(tag.getString("UserId"))));
+                    setPumpHandler(new PlayerHandler(this, UUID.fromString(tag.getString("UserId"))), !clientPacket);
                     break;
                 case "FLUID_PORT":
-                    setPumpHandler(new FluidPortHandler(this, BlockPos.of(Long.parseLong(tag.getString("UserId")))));
+                    setPumpHandler(new FluidPortHandler(this, BlockPos.of(Long.parseLong(tag.getString("UserId")))), !clientPacket);
                     break;
                 default:
                     break;
             }
         } else {
-            setPumpHandler(null);
+            setPumpHandler(null, !clientPacket);
         }
+    }
+
+    public void sendDataImmediately() {
+        syncCooldown = 0;
+        queuedSync = false;
+        sendData();
+    }
+
+    @Override
+    public void sendData() {
+        if (syncCooldown > 0) {
+            queuedSync = true;
+            return;
+        }
+        super.sendData();
+        queuedSync = false;
+        syncCooldown = SYNC_RATE;
     }
 
     @Override
@@ -259,15 +308,6 @@ public class FluidPumpBlockEntity extends SmartBlockEntity implements IHaveGoggl
         }
     }
 
-    public static void withBlockEntityDo(BlockGetter level, BlockPos pos, Consumer<FluidPumpBlockEntity> action) {
-        if (pos == null || level == null) return;
-        Optional.ofNullable(level.getBlockEntity(pos)).ifPresent((be) -> {
-            if (be instanceof FluidPumpBlockEntity fluidPump) {
-                action.accept(fluidPump);
-            }
-        });
-    }
-
     public enum PumpMode implements INamedIconOptions {
         DISCHARGE(LogisticsIcons.I_DISCHARGE),
         SUCTION(LogisticsIcons.I_SUCTION);
@@ -289,5 +329,14 @@ public class FluidPumpBlockEntity extends SmartBlockEntity implements IHaveGoggl
         public String getTranslationKey() {
             return translationKey;
         }
+    }
+
+    public static void withBlockEntityDo(BlockGetter level, BlockPos pos, Consumer<FluidPumpBlockEntity> action) {
+        if (pos == null || level == null) return;
+        Optional.ofNullable(level.getBlockEntity(pos)).ifPresent((be) -> {
+            if (be instanceof FluidPumpBlockEntity fluidPump) {
+                action.accept(fluidPump);
+            }
+        });
     }
 }

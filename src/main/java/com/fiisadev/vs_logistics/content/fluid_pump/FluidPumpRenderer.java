@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.Vec3;
+import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 public class FluidPumpRenderer extends SafeBlockEntityRenderer<FluidPumpBlockEntity> {
     public static final int SEGMENTS = HoseUtils.SEGMENTS;
@@ -35,19 +36,16 @@ public class FluidPumpRenderer extends SafeBlockEntityRenderer<FluidPumpBlockEnt
 
         ms.pushPose();
 
-        Vec3 origin = Vec3.atLowerCornerOf(be.getBlockPos());
+        Vec3 origin = VSGameUtilsKt.toWorldCoordinates(be.getLevel(), Vec3.atLowerCornerOf(be.getBlockPos()));
 
         VertexConsumer builder = buffer.getBuffer(RenderType.debugQuads());
 
-        Direction facing = be.getBlockState().getValue(FluidPumpBlock.FACING);
-
-        Vec3 center = be.getBlockPos().getCenter();
-        Vec3 pumpPos = center.relative(facing, 0.5).add(0, -0.5 + 5 / 16f, 0);
+        Vec3 pumpPos = be.getHoseStart();
         Vec3 userPos = be.getPumpHandler().getHoseEnd(partialTicks);
 
         double dist = pumpPos.distanceTo(userPos);
 
-        Vec3 p1 = pumpPos.add(new Vec3(facing.getStepX(), facing.getStepY(), facing.getStepZ()).scale(dist * 0.3f));
+        Vec3 p1 = pumpPos.add(be.getHoseDir().scale(dist * 0.3f));
         Vec3 p2 = userPos.subtract(be.getPumpHandler().getHoseDir(partialTicks).scale(dist * 0.3f));
 
         renderCurvedHose(builder, ms, pumpPos, userPos, p1, p2, dist, origin);

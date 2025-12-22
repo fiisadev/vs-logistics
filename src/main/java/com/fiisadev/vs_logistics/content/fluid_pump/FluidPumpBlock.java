@@ -68,12 +68,12 @@ public class FluidPumpBlock extends HorizontalDirectionalBlock implements IWrenc
                     BlockPos fluidPumpPos = playerData.getFluidPumpPos();
 
                     if (fluidPumpPos == null) {
-                        be.setPumpHandler(new PlayerHandler(be, player.getUUID()));
+                        be.setPumpHandler(new PlayerHandler(be, player.getUUID()), true);
                         return;
                     }
 
                     if (fluidPumpPos.equals(pos))
-                        be.setPumpHandler(null);
+                        be.setPumpHandler(null, true);
                 });
             });
         }
@@ -83,10 +83,9 @@ public class FluidPumpBlock extends HorizontalDirectionalBlock implements IWrenc
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        withBlockEntityDo(level, pos, (be) -> {
-            if (be.getPumpHandler() != null)
-                be.breakHose();
-        });
+        if (!level.isClientSide) {
+            withBlockEntityDo(level, pos, FluidPumpBlockEntity::breakHose);
+        }
 
         super.onRemove(state, level, pos, newState, movedByPiston);
     }

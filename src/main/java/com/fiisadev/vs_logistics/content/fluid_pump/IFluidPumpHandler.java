@@ -4,6 +4,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.phys.Vec3;
 
 public interface IFluidPumpHandler {
+    boolean equals(Object object);
+
     boolean is(Object object);
 
     void write(CompoundTag tag);

@@ -18,11 +18,17 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.network.PacketDistributor;
+import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 import java.util.Optional;
 import java.util.UUID;
 
 public record PlayerHandler(FluidPumpBlockEntity fluidPump, UUID playerId) implements IFluidPumpHandler {
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof PlayerHandler handler && playerId.equals(handler.playerId) && fluidPump.getBlockPos().equals(handler.fluidPump.getBlockPos());
+    }
+
     public boolean is(Object object) { return object instanceof Player p && p.getUUID().equals(playerId); }
 
     public void write(CompoundTag tag) {
@@ -111,7 +117,7 @@ public record PlayerHandler(FluidPumpBlockEntity fluidPump, UUID playerId) imple
         if (player == null)
             return;
 
-        if (player.position().distanceToSqr(fluidPump.getBlockPos().getCenter()) > Math.pow(24, 2)) {
+        if (VSGameUtilsKt.toWorldCoordinates(fluidPump.getLevel(), fluidPump.getBlockPos()).distanceToSqr(player.position()) > Math.pow(24, 2)) {
             fluidPump.breakHose();
         }
     }

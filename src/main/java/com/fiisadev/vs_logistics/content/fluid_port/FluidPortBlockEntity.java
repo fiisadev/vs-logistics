@@ -101,18 +101,6 @@ public class FluidPortBlockEntity extends SmartBlockEntity implements IHaveGoggl
             if (syncCooldown == 0 && queuedSync)
                 sendData();
         }
-
-        if (level != null && !level.isClientSide) {
-            if (fluidPumpPos == null) return;
-
-            if (level.getBlockEntity(fluidPumpPos) instanceof FluidPumpBlockEntity fluidPump) {
-                if (fluidPump.getPumpHandler() == null || !fluidPump.getPumpHandler().is(this)) {
-                    setFluidPumpPos(null);
-                }
-            } else {
-                setFluidPumpPos(null);
-            }
-        }
     }
 
     public @Nullable IFluidHandler getFluidHandler() {
@@ -122,6 +110,8 @@ public class FluidPortBlockEntity extends SmartBlockEntity implements IHaveGoggl
     @Override
     protected void read(CompoundTag tag, boolean clientPacket) {
         super.read(tag, clientPacket);
+
+        fluidPumpPos = null;
 
         if (tag.contains("FluidPumpPos"))
             fluidPumpPos = NbtUtils.readBlockPos(tag.getCompound("FluidPumpPos"));

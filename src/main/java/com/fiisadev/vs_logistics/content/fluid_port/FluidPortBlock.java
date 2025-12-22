@@ -60,13 +60,13 @@ public class FluidPortBlock extends DirectionalBlock implements IWrenchable, IBE
 
                     if (canPickNozzle) {
                         FluidPumpBlockEntity.withBlockEntityDo(level, be.getFluidPumpPos(), (fluidPump) ->
-                                fluidPump.setPumpHandler(new PlayerHandler(fluidPump, player.getUUID()))
+                                fluidPump.setPumpHandler(new PlayerHandler(fluidPump, player.getUUID()), true)
                         );
                     }
 
                     if (canInsertNozzle) {
                         FluidPumpBlockEntity.withBlockEntityDo(level, playerData.getFluidPumpPos(), (fluidPump) ->
-                            fluidPump.setPumpHandler(new FluidPortHandler(fluidPump, be.getBlockPos()))
+                            fluidPump.setPumpHandler(new FluidPortHandler(fluidPump, be.getBlockPos()), true)
                         );
                     }
                 });
@@ -121,9 +121,11 @@ public class FluidPortBlock extends DirectionalBlock implements IWrenchable, IBE
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-        withBlockEntityDo(level, pos, (be) ->
-            FluidPumpBlockEntity.withBlockEntityDo(level, be.getFluidPumpPos(), FluidPumpBlockEntity::breakHose)
-        );
+        if (!level.isClientSide) {
+            withBlockEntityDo(level, pos, (be) ->
+                FluidPumpBlockEntity.withBlockEntityDo(level, be.getFluidPumpPos(), FluidPumpBlockEntity::breakHose)
+            );
+        }
 
         super.onRemove(state, level, pos, newState, movedByPiston);
     }
