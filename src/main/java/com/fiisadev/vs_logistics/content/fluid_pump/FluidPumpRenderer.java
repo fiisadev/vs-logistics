@@ -1,29 +1,18 @@
 package com.fiisadev.vs_logistics.content.fluid_pump;
 
-import com.fiisadev.vs_logistics.client.utils.HoseUtils;
-import com.fiisadev.vs_logistics.event.FluidPumpHandler;
-import com.mojang.blaze3d.vertex.*;
-import com.mojang.math.Axis;
+import com.fiisadev.vs_logistics.client.utils.HoseUtils;import com.mojang.blaze3d.vertex.*;
 import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRenderer;
-import net.createmod.catnip.data.Pair;
-import net.createmod.catnip.outliner.Outliner;
-import net.createmod.catnip.theme.Color;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix4f;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
-
-import java.util.logging.Level;
 
 public class FluidPumpRenderer extends SafeBlockEntityRenderer<FluidPumpBlockEntity> {
     public static final int SEGMENTS = HoseUtils.SEGMENTS;
@@ -50,14 +39,13 @@ public class FluidPumpRenderer extends SafeBlockEntityRenderer<FluidPumpBlockEnt
 
         ms.pushPose();
 
-        Ship ship = ValkyrienSkies.getShipManagingBlock(be.getLevel(), be.getBlockPos());
-
-        if (ship != null) {
-            double yRot = ship.getTransform().getRotation().y();
-            ms.mulPose(Axis.YP.rotationDegrees(-(float)yRot));
-        }
-
         Vec3 origin = VSGameUtilsKt.toWorldCoordinates(be.getLevel(), Vec3.atLowerCornerOf(be.getBlockPos()));
+        ms.translate(-origin.x, -origin.y, -origin.z);
+
+        Ship ship = ValkyrienSkies.getShipManagingBlock(be.getLevel(), be.getBlockPos());
+        if (ship != null) {
+
+        }
 
         VertexConsumer builder = buffer.getBuffer(RenderType.debugQuads());
         Vec3 pumpPos = be.getHoseStart();
@@ -78,6 +66,7 @@ public class FluidPumpRenderer extends SafeBlockEntityRenderer<FluidPumpBlockEnt
         Vec3 p2 = userPos.subtract(handler.getHoseDir(partialTicks).scale(dist * 0.3f));
 
         renderCurvedHose(builder, ms, be.getBlockPos(), pumpPos, userPos, p1, p2, dist, origin);
+
         ms.popPose();
     }
 
@@ -105,10 +94,10 @@ public class FluidPumpRenderer extends SafeBlockEntityRenderer<FluidPumpBlockEnt
             if (i > 0) {
                 for (int j = 0; j < RADIAL_SEGMENTS; j++) {
                     int next = (j + 1) % RADIAL_SEGMENTS;
-                    Vec3 a = prevRing[j].subtract(origin);
-                    Vec3 b = prevRing[next].subtract(origin);
-                    Vec3 c = currRing[next].subtract(origin);
-                    Vec3 d = currRing[j].subtract(origin);
+                    Vec3 a = prevRing[j];
+                    Vec3 b = prevRing[next];
+                    Vec3 c = currRing[next];
+                    Vec3 d = currRing[j];
 
                     builder.vertex(ms.last().pose(), (float)d.x, (float)d.y, (float)d.z).color(15, 15, 15, 255).endVertex();
                     builder.vertex(ms.last().pose(), (float)c.x, (float)c.y, (float)c.z).color(15, 15, 15, 255).endVertex();

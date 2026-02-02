@@ -49,9 +49,7 @@ public class VSLogistics {
         ValkyrienSkies.api().getPhysTickEvent().on(JointManager::onPhysicsTick);
     }
 
-    public void commonSetup(final FMLCommonSetupEvent event) {
-        event.enqueueWork(LogisticsNetwork::register);
-    }
+    public void commonSetup(final FMLCommonSetupEvent event) { event.enqueueWork(LogisticsNetwork::register); }
 
     public static ResourceLocation asResource(String path) {
         //noinspection removal

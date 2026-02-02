@@ -1,0 +1,12 @@
+{
+  "required": false,
+  "package": "com.fiisadev.vs_logistics.mixin.createaddition",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "WireSpoolMixin",
+    "WireNodeRendererMixin"
+  ],
+  "client": [],
+  "server": [],
+  "plugin": "com.fiisadev.vs_logistics.mixin.createaddition.CreateAdditionMixinPlugin"
+}
