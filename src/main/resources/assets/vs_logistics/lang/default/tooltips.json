@@ -1,5 +1,4 @@
 {
-  "block.vs_logistics.fluid_port.tooltip.summary": "A simple connection point for your _tanks_. Any fluid pumped into it flows straight to the _linked tank_ on your VS ship. To link the tank use a Wrench",
   "block.vs_logistics.fluid_pump.tooltip.condition1": "Discharge Mode",
   "block.vs_logistics.fluid_pump.tooltip.condition2": "Suction Mode",
   "block.vs_logistics.fluid_pump.tooltip.behaviour1": "Moves fluid from the pump _into_ a connected Fluid Port.",

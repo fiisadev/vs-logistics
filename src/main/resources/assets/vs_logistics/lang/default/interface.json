@@ -2,5 +2,14 @@
   "creativetab.base": "VS Logistics",
   "block.vs_logistics.fluid_pump_mode": "Fluid Pump Mode",
   "block.vs_logistics.pump_mode.suction": "Suction",
-  "block.vs_logistics.pump_mode.discharge": "Discharge"
+  "block.vs_logistics.pump_mode.discharge": "Discharge",
+
+  "vs_logistics.ponder.fluid_port.header": "How to Fluid Port",
+  "vs_logistics.ponder.fluid_port.text_1": "Fluid Ports allow compact fluid transfer on VS ships.",
+  "vs_logistics.ponder.fluid_port.text_2": "Link the Port to any Fluid Storage.",
+  "vs_logistics.ponder.fluid_port.text_3": "PUSH",
+  "vs_logistics.ponder.fluid_port.text_4": "PUSH",
+  "vs_logistics.ponder.fluid_port.text_5": "PULL",
+  "vs_logistics.ponder.fluid_port.text_6": "EQUALIZE",
+  "vs_logistics.ponder.fluid_port.text_7": "EQUALIZE"
 }

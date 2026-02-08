@@ -1,6 +1,5 @@
 {
   "block.vs_logistics.fluid_port": "Fluid Port",
-  "block.vs_logistics.fluid_port.tooltip.summary": "A simple connection point for your _tanks_. Any fluid pumped into it flows straight to the _linked tank_ on your VS ship. To link the tank use a Wrench",
   "block.vs_logistics.fluid_pump": "Fluid Pump",
   "block.vs_logistics.fluid_pump.tooltip.behaviour1": "Moves fluid from the pump _into_ a connected Fluid Port.",
   "block.vs_logistics.fluid_pump.tooltip.behaviour2": "_Extracts_ fluid from the connected tank _back into_ the pump.",
@@ -12,5 +11,14 @@
   "block.vs_logistics.pump_mode.suction": "Suction",
   "creativetab.base": "VS Logistics",
   "item.vs_logistics.nozzle": "Nozzle",
-  "item.vs_logistics.pipe_wrench": "Pipe Wrench"
+  "item.vs_logistics.pipe_wrench": "Pipe Wrench",
+
+  "vs_logistics.ponder.fluid_port.header": "How to Fluid Port",
+  "vs_logistics.ponder.fluid_port.text_1": "Fluid Ports allow compact fluid transfer on VS ships.",
+  "vs_logistics.ponder.fluid_port.text_2": "Link the Port to any Fluid Storage.",
+  "vs_logistics.ponder.fluid_port.text_3": "PUSH",
+  "vs_logistics.ponder.fluid_port.text_4": "PUSH",
+  "vs_logistics.ponder.fluid_port.text_5": "PULL",
+  "vs_logistics.ponder.fluid_port.text_6": "EQUALIZE",
+  "vs_logistics.ponder.fluid_port.text_7": "EQUALIZE"
 }

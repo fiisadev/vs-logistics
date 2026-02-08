@@ -4,7 +4,6 @@ import com.fiisadev.vs_logistics.config.LogisticsClientConfig;
 import com.fiisadev.vs_logistics.config.LogisticsCommonConfig;
 import com.fiisadev.vs_logistics.registry.*;
 import com.fiisadev.vs_logistics.managers.JointManager;
-import com.mojang.logging.LogUtils;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.item.ItemDescription;
 import com.simibubi.create.foundation.item.KineticStats;
@@ -18,6 +17,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
@@ -25,7 +25,6 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import org.slf4j.Logger;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
 
 @Mod(VSLogistics.MOD_ID)
@@ -59,10 +58,7 @@ public class VSLogistics {
         ctx.registerConfig(ModConfig.Type.CLIENT, LogisticsClientConfig.SPEC);
         ctx.registerConfig(ModConfig.Type.COMMON, LogisticsCommonConfig.SPEC);
 
-//        ctx.registerExtensionPoint(
-//            ConfigGuiHandler.ConfigGuiFactory.class,
-//            () -> new ConfigGuiHandler.ConfigGuiFactory((minecraft, screen) -> VSClothConfig.createConfigScreenFor(screen, ClockworkConfig.class))
-//        );
+        DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> LogisticsPonderPlugin::registerPlugin);
     }
 
     public void commonSetup(final FMLCommonSetupEvent event) { event.enqueueWork(LogisticsNetwork::register); }
