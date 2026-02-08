@@ -8,8 +8,10 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3d;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
@@ -39,39 +41,42 @@ public class FluidPumpRenderer extends SafeBlockEntityRenderer<FluidPumpBlockEnt
 
         ms.pushPose();
 
-        Vec3 origin = VSGameUtilsKt.toWorldCoordinates(be.getLevel(), Vec3.atLowerCornerOf(be.getBlockPos()));
-        ms.translate(-origin.x, -origin.y, -origin.z);
-
-        Ship ship = ValkyrienSkies.getShipManagingBlock(be.getLevel(), be.getBlockPos());
-        if (ship != null) {
-
-        }
-
-        VertexConsumer builder = buffer.getBuffer(RenderType.debugQuads());
-        Vec3 pumpPos = be.getHoseStart();
-        Vec3 userPos = handler.getHoseEnd(partialTicks);
+        Vec3 hoseStart = be.getHoseStart();
+        Vec3 hoseEnd = handler.getHoseEnd(partialTicks);
+        Vec3 hoseEndDir = handler.getHoseDir(partialTicks);
 
         Player player = Minecraft.getInstance().player;
-
-        if (handler.is(player)) {
-            if (Minecraft.getInstance().options.getCameraType() == CameraType.FIRST_PERSON) {
-                float bodyRotation = player.yBodyRotO + (player.yBodyRot - player.yBodyRotO) * partialTicks;
-                userPos = player.getPosition(partialTicks).add(new Vec3(-0.5, 1, -3).yRot((float)Math.toRadians(-bodyRotation)));
-            }
+        if (handler.is(player) && Minecraft.getInstance().options.getCameraType() == CameraType.FIRST_PERSON) {
+            float bodyRotation = player.yBodyRotO + (player.yBodyRot - player.yBodyRotO) * partialTicks;
+            hoseEnd = player.getPosition(partialTicks).add(new Vec3(-0.5, 1, -3).yRot((float)Math.toRadians(-bodyRotation)));
         }
 
-        double dist = pumpPos.distanceTo(userPos);
+        Ship fluidPumpShip = ValkyrienSkies.getShipManagingBlock(be.getLevel(), be.getBlockPos());
+        if (fluidPumpShip != null) {
+            Vector3d posJOML = new Vector3d(hoseEnd.x, hoseEnd.y, hoseEnd.z);
+            posJOML = fluidPumpShip.getWorldToShip().transformPosition(posJOML);
+            hoseEnd = new Vec3(posJOML.x, posJOML.y, posJOML.z);
 
-        Vec3 p1 = pumpPos.add(be.getHoseDir().scale(dist * 0.3f));
-        Vec3 p2 = userPos.subtract(handler.getHoseDir(partialTicks).scale(dist * 0.3f));
+            Vector3d dirJOML = new Vector3d(hoseEndDir.x, hoseEndDir.y, hoseEndDir.z);
+            dirJOML = fluidPumpShip.getWorldToShip().transformDirection(dirJOML);
+            hoseEndDir = new Vec3(dirJOML.x, dirJOML.y, dirJOML.z);
+        }
 
-        renderCurvedHose(builder, ms, be.getBlockPos(), pumpPos, userPos, p1, p2, dist, origin);
+        hoseEnd = hoseEnd.subtract(Vec3.atLowerCornerOf(be.getBlockPos()));
+
+        double dist = hoseStart.distanceTo(hoseEnd);
+
+        Vec3 p1 = hoseStart.add(be.getDirection().scale(dist * 0.3f));
+        Vec3 p2 = hoseEnd.subtract(hoseEndDir.scale(dist * 0.3f));
+
+        VertexConsumer builder = buffer.getBuffer(RenderType.debugQuads());
+        renderCurvedHose(builder, ms, hoseStart, hoseEnd, p1, p2, dist, be.getBlockPos());
 
         ms.popPose();
     }
 
-    private static void renderCurvedHose(VertexConsumer builder, PoseStack ms, BlockPos pos, Vec3 start, Vec3 end, Vec3 p1, Vec3 p2, double dist, Vec3 origin) {
-        Vec3[] centers = HoseUtils.generateHoseSegments(start, end, p1, p2, dist);
+    private static void renderCurvedHose(VertexConsumer builder, PoseStack ms, Vec3 start, Vec3 end, Vec3 p1, Vec3 p2, double dist, BlockPos originPos) {
+        Vec3[] centers = HoseUtils.generateHoseSegments(start, end, p1, p2, dist, originPos);
 
         Vec3 prevUp = new Vec3(0, 1, 0);
 

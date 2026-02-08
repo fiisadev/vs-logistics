@@ -47,7 +47,7 @@ public record FluidPortHandler(FluidPumpBlockEntity fluidPump, BlockPos fluidPor
             BlockPos blockPos = fluidPort.getBlockPos();
             Direction facing = fluidPort.getBlockState().getValue(FluidPortBlock.FACING);
 
-            Vec3 pos = blockPos.getCenter().add(Vec3.atLowerCornerOf(facing.getNormal()).scale(1f));
+            Vec3 pos = blockPos.getCenter().add(Vec3.atLowerCornerOf(facing.getNormal()));
 
             if (VSGameUtilsKt.getShipManagingPos(level, blockPos) != null)
                 value.set(VSGameUtilsKt.toWorldCoordinates(level, pos));
@@ -85,7 +85,6 @@ public record FluidPortHandler(FluidPumpBlockEntity fluidPump, BlockPos fluidPor
 
             fluidPump.pushFluid(fluidHandler);
         });
-
     }
 
     public void pullFluid() {

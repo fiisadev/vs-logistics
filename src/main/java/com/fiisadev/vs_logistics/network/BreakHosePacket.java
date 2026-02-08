@@ -2,6 +2,7 @@ package com.fiisadev.vs_logistics.network;
 
 import com.fiisadev.vs_logistics.client.utils.HoseUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.FriendlyByteBuf;
@@ -52,7 +53,7 @@ public class BreakHosePacket {
                 Vec3 p1 = startPos.add(startDir.scale(dist * 0.3f));
                 Vec3 p2 = endPos.subtract(endDir.scale(dist * 0.3f));
 
-                Vec3[] segments = HoseUtils.generateHoseSegments(startPos, endPos, p1, p2, dist);
+                Vec3[] segments = HoseUtils.generateHoseSegments(startPos, endPos, p1, p2, dist, new BlockPos(0, 0, 0));
 
                 Minecraft.getInstance().player.playSound(SoundEvents.WOOL_PLACE, 1.0f, 1.0f);
                 for (Vec3 segment : segments) {

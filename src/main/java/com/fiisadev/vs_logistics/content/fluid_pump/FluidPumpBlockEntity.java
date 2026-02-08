@@ -38,6 +38,7 @@ import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3d;
+import org.valkyrienskies.mod.api.ValkyrienSkies;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 import java.util.List;
@@ -92,34 +93,6 @@ public class FluidPumpBlockEntity extends SmartBlockEntity implements IHaveGoggl
         return super.getCapability(cap, side);
     }
 
-    public Vec3 getHoseStart() {
-        Level level = getLevel();
-        BlockPos blockPos = getBlockPos();
-        Direction facing = getBlockState().getValue(FluidPumpBlock.FACING);
-
-        Vec3 pos = blockPos.getCenter().add(Vec3.atLowerCornerOf(facing.getNormal()).scale(0.5f)).add(0, -0.5 + 5 / 16f, 0);
-
-        if (VSGameUtilsKt.getShipManagingPos(level, blockPos) != null)
-            return VSGameUtilsKt.toWorldCoordinates(level, pos);
-
-        return pos;
-    }
-
-    public Vec3 getHoseDir() {
-        BlockPos blockPos = getBlockPos();
-        Direction facing = getBlockState().getValue(FluidPumpBlock.FACING);
-
-        Vec3 dir = Vec3.atLowerCornerOf(facing.getNormal());
-
-        var ship = VSGameUtilsKt.getShipManagingPos(getLevel(), blockPos);
-        if (ship != null) {
-            Vector3d worldDir = ship.getTransform().getShipToWorldRotation().transform(new Vector3d(dir.x, dir.y, dir.z));
-            return new Vec3(worldDir.x, worldDir.y, worldDir.z).normalize();
-        }
-
-        return dir.normalize();
-    }
-
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
@@ -146,6 +119,41 @@ public class FluidPumpBlockEntity extends SmartBlockEntity implements IHaveGoggl
         return pumpMode.get();
     }
 
+    public Vec3 getHoseDir() {
+        BlockPos blockPos = getBlockPos();
+        Direction facing = getBlockState().getValue(FluidPumpBlock.FACING);
+
+        Vec3 dir = Vec3.atLowerCornerOf(facing.getNormal());
+
+        var ship = VSGameUtilsKt.getShipManagingPos(getLevel(), blockPos);
+        if (ship != null) {
+            Vector3d worldDir = ship.getTransform().getShipToWorldRotation().transform(new Vector3d(dir.x, dir.y, dir.z));
+            return new Vec3(worldDir.x, worldDir.y, worldDir.z).normalize();
+        }
+
+        return dir.normalize();
+    }
+
+    public Direction getFacing() {
+        return getBlockState().getValue(FluidPumpBlock.FACING);
+    }
+
+    public Vec3 getDirection() {
+        return Vec3.atLowerCornerOf(getFacing().getNormal());
+    }
+
+    public Vec3 getHoseStart() {
+        return Vec3.atLowerCornerOf(getFacing().getNormal()).scale(0.5f).add(0.5, 5 / 16f, 0.5);
+    }
+
+    public Vec3 getHoseStartWorld() {
+        Vec3 offset = getHoseStart();
+        Vec3 pos = Vec3.atLowerCornerOf(getBlockPos()).add(offset);
+        if (ValkyrienSkies.getShipManagingBlock(level, getBlockPos()) != null)
+            return ValkyrienSkies.positionToWorld(level, pos);
+        return pos;
+    }
+
     public void breakHose() {
         if (level instanceof ServerLevel) {
             if (pumpHandler == null)
@@ -154,7 +162,7 @@ public class FluidPumpBlockEntity extends SmartBlockEntity implements IHaveGoggl
             LogisticsNetwork.CHANNEL.send(
                 PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(getBlockPos())),
                 new BreakHosePacket(
-                    getHoseStart(),
+                    getHoseStartWorld(),
                     pumpHandler.getHoseEnd(0),
                     getHoseDir(),
                     pumpHandler.getHoseDir(0)
