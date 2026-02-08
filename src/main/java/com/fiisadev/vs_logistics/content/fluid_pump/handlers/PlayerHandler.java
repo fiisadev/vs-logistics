@@ -1,6 +1,7 @@
 package com.fiisadev.vs_logistics.content.fluid_pump.handlers;
 
 import com.fiisadev.vs_logistics.client.utils.HoseUtils;
+import com.fiisadev.vs_logistics.config.LogisticsCommonConfig;
 import com.fiisadev.vs_logistics.content.fluid_port.FluidPortBlockEntity;
 import com.fiisadev.vs_logistics.content.fluid_pump.FluidPumpBlockEntity;
 import com.fiisadev.vs_logistics.content.fluid_pump.FluidPumpPlayerDataProvider;
@@ -129,7 +130,7 @@ public record PlayerHandler(FluidPumpBlockEntity fluidPump, UUID playerId) imple
         if (player == null)
             return;
 
-        if (VSGameUtilsKt.toWorldCoordinates(fluidPump.getLevel(), fluidPump.getBlockPos()).distanceToSqr(player.position()) > Math.pow(24, 2)) {
+        if (VSGameUtilsKt.toWorldCoordinates(fluidPump.getLevel(), fluidPump.getBlockPos()).distanceToSqr(player.position()) > Math.pow(LogisticsCommonConfig.HOSE_BREAK_DISTANCE.get(), 2)) {
             fluidPump.breakHose();
         }
     }

@@ -1,5 +1,6 @@
 package com.fiisadev.vs_logistics.content.fluid_port;
 
+import com.fiisadev.vs_logistics.config.LogisticsCommonConfig;
 import com.fiisadev.vs_logistics.registry.LogisticsBlocks;
 import com.fiisadev.vs_logistics.managers.JointManager;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
@@ -47,12 +48,14 @@ public class FluidPortBlockEntity extends SmartBlockEntity implements IHaveGoggl
     private BlockPos fluidPumpPos;
 
     private static final int SYNC_RATE = 8;
+    private static final int LAZY_TICK_RATE = 4;
     protected int syncCooldown;
     protected boolean queuedSync;
 
+
     public FluidPortBlockEntity(BlockEntityType<?> pType, BlockPos pPos, BlockState pBlockState) {
         super(pType, pPos, pBlockState);
-        setLazyTickRate(4);
+        setLazyTickRate(LAZY_TICK_RATE);
     }
 
     public @Nullable BlockPos getFluidPumpPos() {
@@ -80,8 +83,8 @@ public class FluidPortBlockEntity extends SmartBlockEntity implements IHaveGoggl
         ServerShip shipA = VSGameUtilsKt.getShipManagingPos(serverLevel, getBlockPos());
         ServerShip shipB = VSGameUtilsKt.getShipManagingPos(serverLevel, pos);
         if (shipA == null || shipB == null) return false;
-        if (shipA.getId() == shipB.getId()) return true;
-        return JointManager.isShipConnectedToShip(shipB, shipA);
+        if (shipA.getId() != shipB.getId() || !JointManager.isShipConnectedToShip(shipB, shipA)) return false;
+        return VSGameUtilsKt.toWorldCoordinates(serverLevel, getBlockPos()).distanceToSqr(VSGameUtilsKt.toWorldCoordinates(serverLevel, pos)) <= Math.pow(LogisticsCommonConfig.MAX_FLUID_PORT_LINK_DISTANCE.get(), 2);
     }
 
     public void addTarget(BlockPos pos) {
@@ -114,8 +117,7 @@ public class FluidPortBlockEntity extends SmartBlockEntity implements IHaveGoggl
                             int toFill = destHandler.fill(toDrain, IFluidHandler.FluidAction.SIMULATE);
                             if (toFill <= 0) continue;
 
-                            // TODO config
-                            FluidStack drained = srcHandler.drain(new FluidStack(toDrain.getFluid(), Math.min(toFill, 540)), IFluidHandler.FluidAction.EXECUTE);
+                            FluidStack drained = srcHandler.drain(new FluidStack(toDrain.getFluid(), Math.min(toFill, LogisticsCommonConfig.PUMP_RATE.get() * LAZY_TICK_RATE)), IFluidHandler.FluidAction.EXECUTE);
                             if (!drained.isEmpty()) {
                                 destHandler.fill(drained, IFluidHandler.FluidAction.EXECUTE);
                                 sendData();

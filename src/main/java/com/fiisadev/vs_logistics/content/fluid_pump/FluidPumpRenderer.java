@@ -1,6 +1,8 @@
 package com.fiisadev.vs_logistics.content.fluid_pump;
 
-import com.fiisadev.vs_logistics.client.utils.HoseUtils;import com.mojang.blaze3d.vertex.*;
+import com.fiisadev.vs_logistics.client.utils.HoseUtils;
+import com.fiisadev.vs_logistics.config.LogisticsClientConfig;
+import com.mojang.blaze3d.vertex.*;
 import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRenderer;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
@@ -8,19 +10,13 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3d;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
-import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 public class FluidPumpRenderer extends SafeBlockEntityRenderer<FluidPumpBlockEntity> {
-    public static final int SEGMENTS = HoseUtils.SEGMENTS;
-    public static final int RADIAL_SEGMENTS = HoseUtils.RADIAL_SEGMENTS;
-    public static final float RADIUS = HoseUtils.RADIUS;
-
     public FluidPumpRenderer(BlockEntityRendererProvider.Context ctx) {
     }
 
@@ -80,25 +76,29 @@ public class FluidPumpRenderer extends SafeBlockEntityRenderer<FluidPumpBlockEnt
 
         Vec3 prevUp = new Vec3(0, 1, 0);
 
-        Vec3[] prevRing = new Vec3[RADIAL_SEGMENTS];
-        Vec3[] currRing = new Vec3[RADIAL_SEGMENTS];
+        int segments = LogisticsClientConfig.HOSE_SEGMENTS.get();
+        int radialSegments = LogisticsClientConfig.HOSE_RADIAL_SEGMENTS.get();
+        double radius = LogisticsClientConfig.HOSE_RADIUS.get();
 
-        for (int i = 0; i <= SEGMENTS; i++) {
+        Vec3[] prevRing = new Vec3[radialSegments];
+        Vec3[] currRing = new Vec3[radialSegments];
+
+        for (int i = 0; i <= segments; i++) {
             Vec3 center = centers[i];
-            Vec3 tangent = (i < SEGMENTS ? centers[i + 1].subtract(center) : center.subtract(centers[i - 1])).normalize();
+            Vec3 tangent = (i < segments ? centers[i + 1].subtract(center) : center.subtract(centers[i - 1])).normalize();
 
             Vec3 right = tangent.cross(prevUp).normalize();
             Vec3 up = right.cross(tangent).normalize();
             prevUp = up;
 
-            for (int j = 0; j < RADIAL_SEGMENTS; j++) {
-                double angle = 2 * Math.PI * j / RADIAL_SEGMENTS;
-                currRing[j] = center.add(right.scale(Math.cos(angle) * RADIUS).add(up.scale(Math.sin(angle) * RADIUS)));
+            for (int j = 0; j < radialSegments; j++) {
+                double angle = 2 * Math.PI * j / radialSegments;
+                currRing[j] = center.add(right.scale(Math.cos(angle) * radius).add(up.scale(Math.sin(angle) * radius)));
             }
 
             if (i > 0) {
-                for (int j = 0; j < RADIAL_SEGMENTS; j++) {
-                    int next = (j + 1) % RADIAL_SEGMENTS;
+                for (int j = 0; j < radialSegments; j++) {
+                    int next = (j + 1) % radialSegments;
                     Vec3 a = prevRing[j];
                     Vec3 b = prevRing[next];
                     Vec3 c = currRing[next];

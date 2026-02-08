@@ -1,5 +1,7 @@
 package com.fiisadev.vs_logistics;
 
+import com.fiisadev.vs_logistics.config.LogisticsClientConfig;
+import com.fiisadev.vs_logistics.config.LogisticsCommonConfig;
 import com.fiisadev.vs_logistics.registry.*;
 import com.fiisadev.vs_logistics.managers.JointManager;
 import com.mojang.logging.LogUtils;
@@ -7,17 +9,21 @@ import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.item.ItemDescription;
 import com.simibubi.create.foundation.item.KineticStats;
 import com.simibubi.create.foundation.item.TooltipModifier;
+import net.createmod.catnip.config.ui.BaseConfigScreen;
 import net.createmod.catnip.lang.FontHelper;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.data.loading.DatagenModLoader;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
@@ -31,10 +37,10 @@ public class VSLogistics {
                     new ItemDescription.Modifier(item, FontHelper.Palette.STANDARD_CREATE)).andThen(TooltipModifier.mapNull(KineticStats.create(item))
             ));
 
-    private static final Logger LOGGER = LogUtils.getLogger();
+//    private static final Logger LOGGER = LogUtils.getLogger();
 
-    public VSLogistics() {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+    public VSLogistics(FMLJavaModLoadingContext ctx) {
+        IEventBus modEventBus = ctx.getModEventBus();
 
         MinecraftForge.EVENT_BUS.register(this);
 
@@ -47,8 +53,16 @@ public class VSLogistics {
 
         modEventBus.addListener(EventPriority.LOWEST, LogisticsDatagen::gatherData);
         modEventBus.addListener(this::commonSetup);
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+
         ValkyrienSkies.api().getPhysTickEvent().on(JointManager::onPhysicsTick);
+
+        ctx.registerConfig(ModConfig.Type.CLIENT, LogisticsClientConfig.SPEC);
+        ctx.registerConfig(ModConfig.Type.COMMON, LogisticsCommonConfig.SPEC);
+
+//        ctx.registerExtensionPoint(
+//            ConfigGuiHandler.ConfigGuiFactory.class,
+//            () -> new ConfigGuiHandler.ConfigGuiFactory((minecraft, screen) -> VSClothConfig.createConfigScreenFor(screen, ClockworkConfig.class))
+//        );
     }
 
     public void commonSetup(final FMLCommonSetupEvent event) { event.enqueueWork(LogisticsNetwork::register); }
@@ -60,5 +74,18 @@ public class VSLogistics {
 
     public static CreateRegistrate registrate() {
         return REGISTRATE;
+    }
+
+    @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    public static class ModLoadingContext {
+        @SubscribeEvent
+        public static void onLoadComplete(FMLLoadCompleteEvent event) {
+            ModContainer createContainer = ModList.get()
+                    .getModContainerById(MOD_ID)
+                    .orElseThrow(() -> new IllegalStateException("VS Logistics mod container missing on LoadComplete"));
+            createContainer.registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,
+                    () -> new ConfigScreenHandler.ConfigScreenFactory(
+                            (mc, previousScreen) -> new BaseConfigScreen(previousScreen, MOD_ID)));
+        }
     }
 }

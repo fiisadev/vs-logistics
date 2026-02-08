@@ -1,5 +1,6 @@
 package com.fiisadev.vs_logistics.content.fluid_pump;
 
+import com.fiisadev.vs_logistics.config.LogisticsCommonConfig;
 import com.fiisadev.vs_logistics.content.fluid_pump.handlers.FluidPortHandler;
 import com.fiisadev.vs_logistics.content.fluid_pump.handlers.PlayerHandler;
 import com.fiisadev.vs_logistics.network.BreakHosePacket;
@@ -24,7 +25,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -174,7 +174,7 @@ public class FluidPumpBlockEntity extends SmartBlockEntity implements IHaveGoggl
     }
 
     public void pushFluid(@NotNull IFluidHandler dest) {
-        FluidStack simulatedExtract = fluidTank.drain(60, IFluidHandler.FluidAction.SIMULATE);
+        FluidStack simulatedExtract = fluidTank.drain(LogisticsCommonConfig.PUMP_RATE.get(), IFluidHandler.FluidAction.SIMULATE);
         if (simulatedExtract.isEmpty()) return;
 
         int accepted = dest.fill(simulatedExtract, IFluidHandler.FluidAction.SIMULATE);
@@ -187,7 +187,7 @@ public class FluidPumpBlockEntity extends SmartBlockEntity implements IHaveGoggl
     }
 
     public void pullFluid(@NotNull IFluidHandler source) {
-        FluidStack simulatedExtract = source.drain(60, IFluidHandler.FluidAction.SIMULATE);
+        FluidStack simulatedExtract = source.drain(LogisticsCommonConfig.PUMP_RATE.get(), IFluidHandler.FluidAction.SIMULATE);
         if (simulatedExtract.isEmpty()) return;
 
         int accepted = fluidTank.fill(simulatedExtract, IFluidHandler.FluidAction.SIMULATE);

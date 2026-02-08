@@ -1,5 +1,6 @@
 package com.fiisadev.vs_logistics.content.fluid_pump.handlers;
 
+import com.fiisadev.vs_logistics.config.LogisticsCommonConfig;
 import com.fiisadev.vs_logistics.content.fluid_port.FluidPortBlock;
 import com.fiisadev.vs_logistics.content.fluid_port.FluidPortBlockEntity;
 import com.fiisadev.vs_logistics.content.fluid_pump.FluidPumpBlockEntity;
@@ -113,7 +114,7 @@ public record FluidPortHandler(FluidPumpBlockEntity fluidPump, BlockPos fluidPor
             Vec3 fluidPumpPos = VSGameUtilsKt.toWorldCoordinates(fluidPump.getLevel(), fluidPump.getBlockPos().getCenter());
             Vec3 fluidPortPos = VSGameUtilsKt.toWorldCoordinates(fluidPump.getLevel(), fluidPort.getBlockPos());
 
-            if (fluidPumpPos.distanceToSqr(fluidPortPos) > Math.pow(24, 2)) {
+            if (fluidPumpPos.distanceToSqr(fluidPortPos) > Math.pow(LogisticsCommonConfig.HOSE_BREAK_DISTANCE.get(), 2)) {
                 fluidPump.breakHose();
             }
         });

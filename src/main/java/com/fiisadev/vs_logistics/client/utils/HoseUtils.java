@@ -1,20 +1,19 @@
 package com.fiisadev.vs_logistics.client.utils;
 
+import com.fiisadev.vs_logistics.config.LogisticsClientConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Vector3d;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
 
+@OnlyIn(Dist.CLIENT)
 public class HoseUtils {
-    // TODO config
-    public static final int SEGMENTS = 32;
-    public static final int RADIAL_SEGMENTS = 8;
-    public static final float RADIUS = 0.05f;
-
     private static Vec3 bezier(Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3, float t) {
         float u = 1 - t;
         float tt = t * t;
@@ -32,22 +31,26 @@ public class HoseUtils {
 
     public static Vec3[] generateHoseSegments(Vec3 start, Vec3 end, Vec3 p1, Vec3 p2, double dist, BlockPos originPos) {
         Level level = Minecraft.getInstance().level;
-        if (level == null) return new Vec3[SEGMENTS + 1];
+        if (level == null) return new Vec3[0];
 
-        Vec3[] centers = new Vec3[SEGMENTS + 1];
+        int segments = LogisticsClientConfig.HOSE_SEGMENTS.get();
+        double radius = LogisticsClientConfig.HOSE_RADIUS.get();
+
+
+        Vec3[] centers = new Vec3[segments + 1];
 
         Ship ship = ValkyrienSkies.getShipManagingBlock(level, originPos);
 
         // 1. Generate initial Bezier curve
-        for (int i = 0; i <= SEGMENTS; i++) {
-            float t = (float) i / SEGMENTS;
+        for (int i = 0; i <= segments; i++) {
+            float t = (float) i / segments;
             Vec3 point = bezier(start, p1, p2, end, t);
             float slackAmount = (float) (Math.sin(Math.PI * t) * dist * 0.2);
             centers[i] = point.add(0, -slackAmount, 0);
         }
 
         // 2. Terrain-aware adjustment
-        for (int i = 1; i <= SEGMENTS; i++) {
+        for (int i = 1; i <= segments; i++) {
             Vec3 localPoint = centers[i];
             Vec3 lastPoint = centers[i - 1];
 
@@ -75,7 +78,7 @@ public class HoseUtils {
 
             // Raycast in World Space
             Vec3 rayStart = worldPoint.multiply(1, 0, 1).add(0, worldLastPoint.y, 0);
-            Vec3 rayEnd = worldPoint.subtract(0, RADIUS, 0);
+            Vec3 rayEnd = worldPoint.subtract(0, radius, 0);
 
             var hit = level.clip(new ClipContext(
                     rayStart,
@@ -96,13 +99,13 @@ public class HoseUtils {
                     // Subtract origin to get back to renderer-relative space
                     adjustedLocal = new Vec3(
                             jomlHit.x - originPos.getX(),
-                            jomlHit.y - originPos.getY() + RADIUS,
+                            jomlHit.y - originPos.getY() + radius,
                             jomlHit.z - originPos.getZ()
                     );
                 } else {
                     adjustedLocal = new Vec3(
                             worldHitPos.x - originPos.getX(),
-                            worldHitPos.y - originPos.getY() + RADIUS,
+                            worldHitPos.y - originPos.getY() + radius,
                             worldHitPos.z - originPos.getZ()
                     );
                 }
@@ -111,10 +114,10 @@ public class HoseUtils {
         }
 
         // 3. Smooth the curve to remove sharp kinks
-        Vec3[] smoothed = new Vec3[SEGMENTS + 1];
-        for (int i = 0; i <= SEGMENTS; i++) {
+        Vec3[] smoothed = new Vec3[segments + 1];
+        for (int i = 0; i <= segments; i++) {
             Vec3 prev = i == 0 ? centers[i] : centers[i - 1];
-            Vec3 next = i == SEGMENTS ? centers[i] : centers[i + 1];
+            Vec3 next = i == segments ? centers[i] : centers[i + 1];
             smoothed[i] = new Vec3(
                     centers[i].x,
                     (prev.y + centers[i].y + next.y) / 3f,
