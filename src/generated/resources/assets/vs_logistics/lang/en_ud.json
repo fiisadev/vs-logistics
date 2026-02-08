@@ -1,7 +1,6 @@
 {
-  "block.vs_logistics.feeder": "ɹǝpǝǝℲ",
   "block.vs_logistics.fluid_port": "ʇɹoԀ pınןℲ",
-  "block.vs_logistics.fluid_port.tooltip.summary": "˙dıɥs SΛ ɹnoʎ uo ‾ʞuɐʇ pǝʞuıן‾ ǝɥʇ oʇ ʇɥbıɐɹʇs sʍoןɟ ʇı oʇuı pǝdɯnd pınןɟ ʎuⱯ ˙‾sʞuɐʇ‾ ɹnoʎ ɹoɟ ʇuıod uoıʇɔǝuuoɔ ǝןdɯıs Ɐ",
+  "block.vs_logistics.fluid_port.tooltip.summary": "ɥɔuǝɹM ɐ ǝsn ʞuɐʇ ǝɥʇ ʞuıן o⟘ ˙dıɥs SΛ ɹnoʎ uo ‾ʞuɐʇ pǝʞuıן‾ ǝɥʇ oʇ ʇɥbıɐɹʇs sʍoןɟ ʇı oʇuı pǝdɯnd pınןɟ ʎuⱯ ˙‾sʞuɐʇ‾ ɹnoʎ ɹoɟ ʇuıod uoıʇɔǝuuoɔ ǝןdɯıs Ɐ",
   "block.vs_logistics.fluid_pump": "dɯnԀ pınןℲ",
   "block.vs_logistics.fluid_pump.tooltip.behaviour1": "˙ʇɹoԀ pınןℲ pǝʇɔǝuuoɔ ɐ ‾oʇuı‾ dɯnd ǝɥʇ ɯoɹɟ pınןɟ sǝʌoW",
   "block.vs_logistics.fluid_pump.tooltip.behaviour2": "˙dɯnd ǝɥʇ ‾oʇuı ʞɔɐq‾ ʞuɐʇ pǝʇɔǝuuoɔ ǝɥʇ ɯoɹɟ pınןɟ ‾sʇɔɐɹʇxƎ‾",
@@ -12,5 +11,6 @@
   "block.vs_logistics.pump_mode.discharge": "ǝbɹɐɥɔsıᗡ",
   "block.vs_logistics.pump_mode.suction": "uoıʇɔnS",
   "creativetab.base": "sɔıʇsıboꞀ SΛ",
-  "item.vs_logistics.nozzle": "ǝןzzoN"
+  "item.vs_logistics.nozzle": "ǝןzzoN",
+  "item.vs_logistics.pipe_wrench": "ɥɔuǝɹM ǝdıԀ"
 }

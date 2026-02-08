@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "#G",
+    "#C",
+    " S"
+  ],
+  "key": {
+    "#": { "item": "create:copper_sheet" },
+    "G": { "item": "create:golden_sheet" },
+    "C": { "item": "create:cogwheel" },
+    "S": { "item": "minecraft:stick" }
+  },
+  "result": {
+    "item": "vs_logistics:pipe_wrench"
+  }
+}

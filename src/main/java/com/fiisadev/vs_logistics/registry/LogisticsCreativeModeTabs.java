@@ -1,6 +1,7 @@
 package com.fiisadev.vs_logistics.registry;
 
 import com.fiisadev.vs_logistics.VSLogistics;
+import com.fiisadev.vs_logistics.content.pipe_wrench.PipeWrenchItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -20,6 +21,7 @@ public class LogisticsCreativeModeTabs {
                     .displayItems(((parameters, output) -> {
                         output.accept(LogisticsBlocks.FLUID_PORT.get());
                         output.accept(LogisticsBlocks.FLUID_PUMP.get());
+                        output.accept(PipeWrenchItem.getPipeWrench());
                     }))
                     .build()
     );

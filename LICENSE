@@ -1,0 +1,43 @@
+MIT License for VS Logistics
+============================
+
+Copyright (c) 2026 fiisadev
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+Lambda License for Pipe Wrench Resources
+========================================
+
+This section applies to the following resources copied from CMParallelPipes:
+
+- src/main/resources/assets/vs_logistics/models/item/pipe_wrench.json
+- src/main/resources/assets/vs_logistics/models/item/pipe_wrench_gear.json
+- src/main/resources/assets/vs_logistics/textures/item/pipe_wrench.png
+- src/main/java/com/fiisadev/vs_logistics/content/pipe_wrench
+
+Copyright (c) 2025 Krei johnemail@kreidev.com
+
+Licensed under the Lambda License:
+
+You may use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of this content under the terms of the Lambda License.
+You must retain this license and provide attribution to the original authors.
+
+This content is provided "AS IS", without warranty of any kind.

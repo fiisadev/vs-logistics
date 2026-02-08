@@ -2,8 +2,10 @@ package com.fiisadev.vs_logistics.client;
 
 import com.fiisadev.vs_logistics.content.fluid_port.FluidPortBlockEntity;
 import com.fiisadev.vs_logistics.content.fluid_port.FluidPortTarget;
+import com.fiisadev.vs_logistics.content.pipe_wrench.PipeWrenchItem;
 import com.fiisadev.vs_logistics.network.FluidPortPacket;
 import com.fiisadev.vs_logistics.registry.LogisticsBlocks;
+import com.fiisadev.vs_logistics.registry.LogisticsItems;
 import com.fiisadev.vs_logistics.registry.LogisticsNetwork;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.foundation.blockEntity.IMultiBlockEntityContainer;
@@ -42,7 +44,7 @@ public class FluidPortHandler {
         BlockPos pos = event.getPos();
         Player player = event.getEntity();
         Level level = event.getLevel();
-        boolean isHoldingWrench = player.getMainHandItem().is(AllItems.WRENCH.get());
+        boolean isHoldingWrench = player.getMainHandItem().is(PipeWrenchItem.getPipeWrench());
 
         if (level.getBlockState(pos).is(LogisticsBlocks.FLUID_PORT.get())) {
             if (isHoldingWrench && !player.isShiftKeyDown()) {
@@ -64,7 +66,7 @@ public class FluidPortHandler {
         Player player = Minecraft.getInstance().player;
         if (player == null) return;
 
-        boolean isHoldingWrench = player.getMainHandItem().is(AllItems.WRENCH.get());
+        boolean isHoldingWrench = player.getMainHandItem().is(PipeWrenchItem.getPipeWrench());
 
         if (!isHoldingWrench)
             selectedSource = null;

@@ -1,7 +1,6 @@
 {
-  "block.vs_logistics.feeder": "Feeder",
   "block.vs_logistics.fluid_port": "Fluid Port",
-  "block.vs_logistics.fluid_port.tooltip.summary": "A simple connection point for your _tanks_. Any fluid pumped into it flows straight to the _linked tank_ on your VS ship.",
+  "block.vs_logistics.fluid_port.tooltip.summary": "A simple connection point for your _tanks_. Any fluid pumped into it flows straight to the _linked tank_ on your VS ship. To link the tank use a Wrench",
   "block.vs_logistics.fluid_pump": "Fluid Pump",
   "block.vs_logistics.fluid_pump.tooltip.behaviour1": "Moves fluid from the pump _into_ a connected Fluid Port.",
   "block.vs_logistics.fluid_pump.tooltip.behaviour2": "_Extracts_ fluid from the connected tank _back into_ the pump.",
@@ -12,5 +11,6 @@
   "block.vs_logistics.pump_mode.discharge": "Discharge",
   "block.vs_logistics.pump_mode.suction": "Suction",
   "creativetab.base": "VS Logistics",
-  "item.vs_logistics.nozzle": "Nozzle"
+  "item.vs_logistics.nozzle": "Nozzle",
+  "item.vs_logistics.pipe_wrench": "Pipe Wrench"
 }
