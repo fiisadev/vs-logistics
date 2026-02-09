@@ -1,6 +1,8 @@
 package com.fiisadev.vs_logistics.mixin.createaddition;
 
+import com.fiisadev.vs_logistics.utils.ShipUtils;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mrh0.createaddition.energy.IWireNode;
 import com.mrh0.createaddition.energy.WireType;
 import com.mrh0.createaddition.event.ClientEventHandler;
@@ -13,10 +15,14 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
@@ -26,73 +32,140 @@ public abstract class WireNodeRendererMixin<T extends BlockEntity> implements Bl
 
     @Shadow private float time;
 
-    @Shadow public static float distanceFromZero(float x, float y, float z) {
-        throw new IllegalStateException("This is shadow method and should never be called");
+    @Shadow private static float hang(float t, float dis) { return 0f; }
+    @Shadow private static float divf(int a, int b) { return 0f; }
+    @Shadow public static void wireRender(BlockEntity tileEntityIn, BlockPos other, PoseStack stack, MultiBufferSource buffer, float x, float y, float z, WireType type, float dis) {
     }
 
-    @Shadow
-    public static void wireRender(BlockEntity tileEntityIn, BlockPos other, PoseStack stack, MultiBufferSource buffer, float x, float y, float z, WireType type, float dis) {
-    }
+    private static Vec3 currentGravity = new Vec3(0, -1, 0);
 
     public WireNodeRendererMixin(BlockEntityRendererProvider.Context context) {}
 
+    // W Gemini Pro
+    @Inject(
+            method = "wireVert",
+            at = @At("HEAD"),
+            cancellable = true,
+            remap = false // This tells the compiler not to worry about the obfuscation map for this private method
+    )
+    private static void onWireVert(VertexConsumer vertBuilder, Matrix4f matrix, int light, float x, float y, float z,
+                                   float a, float b, int count, int index, boolean sw, float o1, float o2,
+                                   WireType type, float dis, BlockState state, PoseStack stack, int lightOffset, float hangFactor,
+                                   org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+
+        int cr = type.getRed();
+        int cg = type.getGreen();
+        int cb = type.getBlue();
+
+        if (index % 2 == 0) {
+            cr *= 0.7F;
+            cg *= 0.7F;
+            cb *= 0.7F;
+        }
+
+        float part = (float) index / (float) count;
+
+        float fx = x * part;
+        float fy = y * part;
+        float fz = z * part;
+
+        float hangMag = -hangFactor * hang(divf(index, count), dis);
+
+        fx += (float) (currentGravity.x * hangMag);
+        fy += (float) (currentGravity.y * hangMag);
+        fz += (float) (currentGravity.z * hangMag);
+
+        if(Math.abs(x) + Math.abs(z) < Math.abs(y)) {
+            boolean p = b > 0;
+            float c = 0.015f;
+
+            if (!sw) {
+                vertBuilder.vertex(matrix, fx -c, fy, fz + (p?-c:c)).color(cr, cg, cb, 255).uv2(light).endVertex();
+            }
+
+            vertBuilder.vertex(matrix, fx + c, fy, fz + (p?c:-c)).color(cr, cg, cb, 255).uv2(light).endVertex();
+            if (sw) {
+                vertBuilder.vertex(matrix, fx -c, fy, fz + (p?-c:c)).color(cr, cg, cb, 255).uv2(light).endVertex();
+            }
+        }
+        else {
+            if (!sw) {
+                vertBuilder.vertex(matrix, fx + o1, fy + a - b, fz - o2).color(cr, cg, cb, 255).uv2(light).endVertex();
+            }
+
+            vertBuilder.vertex(matrix, fx - o1, fy + b, fz + o2).color(cr, cg, cb, 255).uv2(light).endVertex();
+            if (sw) {
+                vertBuilder.vertex(matrix, fx + o1, fy + a - b, fz - o2).color(cr, cg, cb, 255).uv2(light).endVertex();
+            }
+        }
+        ci.cancel();
+    }
+
     /**
      * @author fiisadev
-     * @reason VS
+     * @reason yes
      */
     @Overwrite
     public void render(T be, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn,
                        int combinedLightIn, int combinedOverlayIn) {
         IWireNode te = (IWireNode) be;
-
         time += partialTicks;
+
+        Vec3 sourceCenter = te.getPos().getCenter();
+        Ship sourceShip = ValkyrienSkies.getShipManagingBlock(be.getLevel(), be.getBlockPos());
+
+        if (sourceShip != null)
+            currentGravity = ShipUtils.dirToShip(sourceShip, new Vec3(0, -1, 0));
+        else
+            currentGravity = new Vec3(0, -1, 0);
 
         for (int i = 0; i < te.getNodeCount(); i++) {
             if (!te.hasConnection(i)) continue;
-            Vec3 d1 = te.getNodeOffset(i);
-            float ox1 = ((float) d1.x());
-            float oy1 = ((float) d1.y());
-            float oz1 = ((float) d1.z());
 
             IWireNode wn = te.getWireNode(i);
             if (wn == null) return;
 
-            Vec3 d2 = wn.getNodeOffset(te.getOtherNodeIndex(i)); // get other
-            float ox2 = ((float) d2.x());
-            float oy2 = ((float) d2.y());
-            float oz2 = ((float) d2.z());
+            Vec3 o1 = te.getNodeOffset(i);
+            Vec3 o2 = wn.getNodeOffset(te.getOtherNodeIndex(i));
 
-            Vec3 pos = Vec3.atLowerCornerOf(te.getPos());
-            Ship ship = ValkyrienSkies.getShipManagingBlock(be.getLevel(), pos);
-            if (ship != null) {
-                pos = VSGameUtilsKt.toWorldCoordinates(ship, pos);
+            BlockPos destBlockPos = te.getNodePos(i);
+            Vec3 destCenter = destBlockPos.getCenter();
+            Ship destShip = ValkyrienSkies.getShipManagingBlock(be.getLevel(), destBlockPos);
+
+            Vec3 destWorldConn;
+
+            if (destShip != null) {
+                Vec3 destCenterWorld = VSGameUtilsKt.toWorldCoordinates(destShip, destCenter);
+                Vec3 o2World = ShipUtils.dirToWorld(destShip, o2);
+                destWorldConn = destCenterWorld.add(o2World);
+            } else {
+                destWorldConn = destCenter.add(o2);
             }
 
-            BlockPos other = te.getNodePos(i);
-            Vec3 otherPos = Vec3.atLowerCornerOf(other).add(0.5f, 0.5f, 0.5f);
-            Ship otherShip = ValkyrienSkies.getShipManagingBlock(be.getLevel(), other);
-            if (otherShip != null) {
-                otherPos = VSGameUtilsKt.toWorldCoordinates(otherShip, otherPos);
+            Vec3 destLocalConn;
+            if (sourceShip != null) {
+                destLocalConn = ShipUtils.worldToShip(sourceShip, destWorldConn);
+            } else {
+                destLocalConn = destWorldConn;
             }
 
-            float tx = (float)(otherPos.x - pos.x);
-            float ty = (float)(otherPos.y - pos.y);
-            float tz = (float)(otherPos.z - pos.z);
+            Vec3 sourceLocalConn = sourceCenter.add(o1);
+
+            Vec3 drawVector = destLocalConn.subtract(sourceLocalConn);
+
             matrixStackIn.pushPose();
+            matrixStackIn.translate(.5f + o1.x, .5f + o1.y, .5f + o1.z);
 
-            float dis = distanceFromZero(tx, ty, tz);
-
-            matrixStackIn.translate(tx + ox2 + 0.5f, ty + oy2 + 0.5f, tz + oz2 + 0.5f);
             wireRender(
                     be,
-                    other,
+                    destBlockPos,
                     matrixStackIn,
                     bufferIn,
-                    -tx - ox2 + ox1,
-                    -ty - oy2 + oy1,
-                    -tz - oz2 + oz1,
+                    (float) drawVector.x,
+                    (float) drawVector.y,
+                    (float) drawVector.z,
                     te.getNodeType(i),
-                    dis
+                    (float)drawVector.length()
             );
             matrixStackIn.popPose();
         }
@@ -118,7 +191,7 @@ public abstract class WireNodeRendererMixin<T extends BlockEntity> implements Bl
             float tz = (float)playerPos.z - te.getPos().getZ();
             matrixStackIn.pushPose();
 
-            float dis = distanceFromZero(tx, ty, tz);
+            float dis = 0;
 
             matrixStackIn.translate(tx + .5f, ty + .5f, tz + .5f);
             wireRender(
