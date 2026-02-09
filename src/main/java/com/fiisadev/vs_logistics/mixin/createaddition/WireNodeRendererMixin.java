@@ -46,7 +46,7 @@ public abstract class WireNodeRendererMixin<T extends BlockEntity> implements Bl
             method = "wireVert",
             at = @At("HEAD"),
             cancellable = true,
-            remap = false // This tells the compiler not to worry about the obfuscation map for this private method
+            remap = false
     )
     private static void onWireVert(VertexConsumer vertBuilder, Matrix4f matrix, int light, float x, float y, float z,
                                    float a, float b, int count, int index, boolean sw, float o1, float o2,

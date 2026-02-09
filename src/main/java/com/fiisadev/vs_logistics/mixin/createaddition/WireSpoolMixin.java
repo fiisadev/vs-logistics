@@ -8,9 +8,11 @@ import com.mrh0.createaddition.item.WireSpool;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.valkyrienskies.mod.api.ValkyrienSkies;
 
 @Mixin(WireSpool.class)
 public class WireSpoolMixin {
@@ -41,7 +43,10 @@ public class WireSpoolMixin {
 
         int maxLength = Math.min(wn1.getMaxWireLength(), wn2.getMaxWireLength());
 
-//        if (pos1.distSqr(pos2) > maxLength * maxLength) return WireConnectResult.LONG;
+        Vec3 p1 = ValkyrienSkies.positionToWorld(world, pos1.getCenter());
+        Vec3 p2 = ValkyrienSkies.positionToWorld(world, pos2.getCenter());
+
+        if (p1.distanceToSqr(p2) > maxLength * maxLength) return WireConnectResult.LONG;
         if (wn1.hasConnectionTo(pos2)) return WireConnectResult.EXISTS;
         if(wn1.getConnectorType() == ConnectorType.Large && wn2.getConnectorType() == ConnectorType.Large) {
             if(type == WireType.COPPER) return WireConnectResult.REQUIRES_HIGH_CURRENT;
