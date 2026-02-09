@@ -1,0 +1,12 @@
+[
+  {
+    "block": "vs_logistics:fluid_pump",
+    "mass": 3200,
+    "friction": 0.4
+  },
+  {
+    "block": "vs_logistics:fluid_port",
+    "mass": 1800,
+    "friction": 0.4
+  }
+]
