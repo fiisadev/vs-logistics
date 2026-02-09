@@ -5,9 +5,11 @@ import com.fiisadev.vs_logistics.content.fluid_port.FluidPortBlock;
 import com.fiisadev.vs_logistics.content.fluid_port.FluidPortBlockEntity;
 import com.fiisadev.vs_logistics.content.fluid_pump.FluidPumpBlockEntity;
 import com.fiisadev.vs_logistics.content.fluid_pump.IFluidPumpHandler;
+import com.simibubi.create.AllSoundEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fluids.capability.IFluidHandler;
@@ -99,12 +101,14 @@ public record FluidPortHandler(FluidPumpBlockEntity fluidPump, BlockPos fluidPor
 
     public void onStartUsing() {
         withFluidPortDo((fluidPort) -> {
+            AllSoundEvents.CONTRAPTION_DISASSEMBLE.playOnServer(fluidPort.getLevel(), fluidPort.getBlockPos(), 1f, 1.1f);
             fluidPort.setFluidPumpPos(fluidPump.getBlockPos());
         });
     }
 
     public void onStopUsing() {
         withFluidPortDo((fluidPort) -> {
+            AllSoundEvents.CONTRAPTION_DISASSEMBLE.playOnServer(fluidPort.getLevel(), fluidPort.getBlockPos(), 1f, 1.8f);
             fluidPort.setFluidPumpPos(null);
         });
     }
