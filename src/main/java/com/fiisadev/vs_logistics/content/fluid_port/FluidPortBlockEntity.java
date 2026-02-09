@@ -33,6 +33,7 @@ import org.valkyrienskies.core.api.ships.ServerShip;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class FluidPortBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation {
     private final Map<BlockPos, FluidPortTarget> targetMap = new HashMap<>();
@@ -161,14 +162,11 @@ public class FluidPortBlockEntity extends SmartBlockEntity implements IHaveGoggl
                         FluidStack fs = slot.getFluid();
                         return fs.getFluid() == fluid || (fs.isEmpty() && slot.canAccept(fluid));
                     })
-                    .sorted(Comparator
-                            .comparingInt(slot -> System.identityHashCode(((FluidTankSlot)slot).handler))
-                            .thenComparingInt(slot -> ((FluidTankSlot)slot).tankIndex))
-                    .toList();
+                    .collect(Collectors.toList());
 
             if (compatible.isEmpty()) continue;
 
-            int drainedTotal = 0;
+            long totalDrained = 0;
             for (FluidTankSlot slot : allSlots) {
                 FluidStack fs = slot.getFluid();
                 if (fs.getFluid() == fluid) {
@@ -176,22 +174,47 @@ public class FluidPortBlockEntity extends SmartBlockEntity implements IHaveGoggl
                             new FluidStack(fluid, fs.getAmount()),
                             IFluidHandler.FluidAction.EXECUTE
                     );
-                    drainedTotal += drained.getAmount();
+                    totalDrained += drained.getAmount();
                 }
             }
-            if (drainedTotal <= 0) continue;
 
-            int n = compatible.size();
-            int average = drainedTotal / n;
-            int remainder = drainedTotal % n;
+            if (totalDrained <= 0) continue;
 
-            for (FluidTankSlot slot : compatible) {
+            redistributeFluid(fluid, totalDrained, compatible);
+        }
+    }
+
+    private void redistributeFluid(Fluid fluid, long amountToDistribute, List<FluidTankSlot> availableSlots) {
+        long remaining = amountToDistribute;
+
+        availableSlots.sort(Comparator.comparingInt(s -> s.handler.getTankCapacity(s.tankIndex)));
+
+        while (remaining > 0 && !availableSlots.isEmpty()) {
+            int n = availableSlots.size();
+            int average = (int) (remaining / n);
+            int extra = (int) (remaining % n);
+
+            List<FluidTankSlot> fullSlots = new ArrayList<>();
+
+            for (int i = 0; i < availableSlots.size(); i++) {
+                FluidTankSlot slot = availableSlots.get(i);
                 int capacity = slot.handler.getTankCapacity(slot.tankIndex);
-                int amount = Math.min(average + (remainder-- > 0 ? 1 : 0), capacity);
-                if (amount > 0) {
-                    slot.handler.fill(new FluidStack(fluid, amount), IFluidHandler.FluidAction.EXECUTE);
+
+                int targetFill = average + (i < extra ? 1 : 0);
+
+                if (targetFill >= capacity) {
+                    int filled = slot.handler.fill(new FluidStack(fluid, capacity), IFluidHandler.FluidAction.EXECUTE);
+                    remaining -= filled;
+                    fullSlots.add(slot);
+                } else {
+                    int filled = slot.handler.fill(new FluidStack(fluid, targetFill), IFluidHandler.FluidAction.EXECUTE);
+                    remaining -= filled;
                 }
             }
+
+            availableSlots.removeAll(fullSlots);
+
+            if (fullSlots.isEmpty()) break;
         }
     }
 
