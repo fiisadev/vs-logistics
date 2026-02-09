@@ -5,6 +5,7 @@ import com.fiisadev.vs_logistics.content.fluid_port.FluidPortBlock;
 import com.fiisadev.vs_logistics.content.fluid_port.FluidPortBlockEntity;
 import com.fiisadev.vs_logistics.content.fluid_pump.FluidPumpBlockEntity;
 import com.fiisadev.vs_logistics.content.fluid_pump.IFluidPumpHandler;
+import com.fiisadev.vs_logistics.utils.ShipUtils;
 import com.simibubi.create.AllSoundEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -14,6 +15,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import org.joml.Vector3d;
+import org.valkyrienskies.core.api.ships.ClientShip;
+import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -52,8 +55,9 @@ public record FluidPortHandler(FluidPumpBlockEntity fluidPump, BlockPos fluidPor
 
             Vec3 pos = blockPos.getCenter().add(Vec3.atLowerCornerOf(facing.getNormal()));
 
-            if (VSGameUtilsKt.getShipManagingPos(level, blockPos) != null)
-                value.set(VSGameUtilsKt.toWorldCoordinates(level, pos));
+            Ship ship = VSGameUtilsKt.getShipManagingPos(level, blockPos);
+            if (ship != null)
+                value.set(ShipUtils.shipToWorld(ship, pos));
             else
                 value.set(pos);
         });
@@ -71,8 +75,7 @@ public record FluidPortHandler(FluidPumpBlockEntity fluidPump, BlockPos fluidPor
 
             var ship = VSGameUtilsKt.getShipManagingPos(fluidPump.getLevel(), blockPos);
             if (ship != null) {
-                Vector3d worldDir = ship.getTransform().getShipToWorldRotation().transform(new Vector3d(dir.x, dir.y, dir.z));
-                value.set(new Vec3(worldDir.x, worldDir.y, worldDir.z));
+                value.set(ShipUtils.dirToWorld(ship, dir));
             } else {
                 value.set(dir);
             }

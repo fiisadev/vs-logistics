@@ -23,9 +23,8 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.valkyrienskies.core.api.ships.Ship;
+import org.valkyrienskies.core.api.ships.ClientShip;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
-import org.valkyrienskies.mod.common.VSGameUtilsKt;
 
 @Mixin(WireNodeRenderer.class)
 public abstract class WireNodeRendererMixin<T extends BlockEntity> implements BlockEntityRenderer<T> {
@@ -112,7 +111,7 @@ public abstract class WireNodeRendererMixin<T extends BlockEntity> implements Bl
         time += partialTicks;
 
         Vec3 sourceCenter = te.getPos().getCenter();
-        Ship sourceShip = ValkyrienSkies.getShipManagingBlock(be.getLevel(), be.getBlockPos());
+        ClientShip sourceShip = (ClientShip)ValkyrienSkies.getShipManagingBlock(be.getLevel(), be.getBlockPos());
 
         if (sourceShip != null)
             currentGravity = ShipUtils.dirToShip(sourceShip, new Vec3(0, -1, 0));
@@ -130,12 +129,12 @@ public abstract class WireNodeRendererMixin<T extends BlockEntity> implements Bl
 
             BlockPos destBlockPos = te.getNodePos(i);
             Vec3 destCenter = destBlockPos.getCenter();
-            Ship destShip = ValkyrienSkies.getShipManagingBlock(be.getLevel(), destBlockPos);
+            ClientShip destShip = (ClientShip)ValkyrienSkies.getShipManagingBlock(be.getLevel(), destBlockPos);
 
             Vec3 destWorldConn;
 
             if (destShip != null) {
-                Vec3 destCenterWorld = VSGameUtilsKt.toWorldCoordinates(destShip, destCenter);
+                Vec3 destCenterWorld = ShipUtils.shipToWorld(destShip, destCenter);
                 Vec3 o2World = ShipUtils.dirToWorld(destShip, o2);
                 destWorldConn = destCenterWorld.add(o2World);
             } else {

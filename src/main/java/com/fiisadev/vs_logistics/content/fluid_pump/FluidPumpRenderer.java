@@ -2,6 +2,7 @@ package com.fiisadev.vs_logistics.content.fluid_pump;
 
 import com.fiisadev.vs_logistics.client.utils.HoseUtils;
 import com.fiisadev.vs_logistics.config.LogisticsClientConfig;
+import com.fiisadev.vs_logistics.utils.ShipUtils;
 import com.mojang.blaze3d.vertex.*;
 import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRenderer;
 import net.minecraft.client.CameraType;
@@ -12,8 +13,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3d;
-import org.valkyrienskies.core.api.ships.Ship;
+import org.valkyrienskies.core.api.ships.ClientShip;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
 
 public class FluidPumpRenderer extends SafeBlockEntityRenderer<FluidPumpBlockEntity> {
@@ -47,15 +47,10 @@ public class FluidPumpRenderer extends SafeBlockEntityRenderer<FluidPumpBlockEnt
             hoseEnd = player.getPosition(partialTicks).add(new Vec3(-0.5, 1, -3).yRot((float)Math.toRadians(-bodyRotation)));
         }
 
-        Ship fluidPumpShip = ValkyrienSkies.getShipManagingBlock(be.getLevel(), be.getBlockPos());
+        ClientShip fluidPumpShip = (ClientShip)ValkyrienSkies.getShipManagingBlock(be.getLevel(), be.getBlockPos());
         if (fluidPumpShip != null) {
-            Vector3d posJOML = new Vector3d(hoseEnd.x, hoseEnd.y, hoseEnd.z);
-            posJOML = fluidPumpShip.getWorldToShip().transformPosition(posJOML);
-            hoseEnd = new Vec3(posJOML.x, posJOML.y, posJOML.z);
-
-            Vector3d dirJOML = new Vector3d(hoseEndDir.x, hoseEndDir.y, hoseEndDir.z);
-            dirJOML = fluidPumpShip.getWorldToShip().transformDirection(dirJOML);
-            hoseEndDir = new Vec3(dirJOML.x, dirJOML.y, dirJOML.z);
+            hoseEnd = ShipUtils.worldToShip(fluidPumpShip, hoseEnd);
+            hoseEndDir = ShipUtils.dirToShip(fluidPumpShip, hoseEndDir);
         }
 
         hoseEnd = hoseEnd.subtract(Vec3.atLowerCornerOf(be.getBlockPos()));
