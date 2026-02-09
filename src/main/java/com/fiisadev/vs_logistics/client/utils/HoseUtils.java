@@ -1,6 +1,7 @@
 package com.fiisadev.vs_logistics.client.utils;
 
 import com.fiisadev.vs_logistics.config.LogisticsClientConfig;
+import com.fiisadev.vs_logistics.utils.ShipUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ClipContext;
@@ -41,12 +42,18 @@ public class HoseUtils {
 
         Ship ship = ValkyrienSkies.getShipManagingBlock(level, originPos);
 
+        Vec3 up = new Vec3(0, 1, 0);
+        if (ship != null)
+            up = ShipUtils.dirToShip(ship, up);
+
         // 1. Generate initial Bezier curve
         for (int i = 0; i <= segments; i++) {
             float t = (float) i / segments;
             Vec3 point = bezier(start, p1, p2, end, t);
             float slackAmount = (float) (Math.sin(Math.PI * t) * dist * 0.2);
-            centers[i] = point.add(0, -slackAmount, 0);
+
+
+            centers[i] = point.add(up.scale(-slackAmount));
         }
 
         // 2. Terrain-aware adjustment
@@ -77,7 +84,7 @@ public class HoseUtils {
             }
 
             // Raycast in World Space
-            Vec3 rayStart = worldPoint.multiply(1, 0, 1).add(0, worldLastPoint.y, 0);
+            Vec3 rayStart = worldPoint.multiply(1, 0, 1).add(0, Math.max(worldPoint.y, worldLastPoint.y), 0);
             Vec3 rayEnd = worldPoint.subtract(0, radius, 0);
 
             var hit = level.clip(new ClipContext(
@@ -99,17 +106,17 @@ public class HoseUtils {
                     // Subtract origin to get back to renderer-relative space
                     adjustedLocal = new Vec3(
                             jomlHit.x - originPos.getX(),
-                            jomlHit.y - originPos.getY() + radius,
+                            jomlHit.y - originPos.getY(),
                             jomlHit.z - originPos.getZ()
                     );
                 } else {
                     adjustedLocal = new Vec3(
                             worldHitPos.x - originPos.getX(),
-                            worldHitPos.y - originPos.getY() + radius,
+                            worldHitPos.y - originPos.getY(),
                             worldHitPos.z - originPos.getZ()
                     );
                 }
-                centers[i] = adjustedLocal;
+                centers[i] = adjustedLocal.add(up.scale(radius));
             }
         }
 
