@@ -2,10 +2,12 @@ package com.fiisadev.vs_logistics.client.utils;
 
 import com.fiisadev.vs_logistics.config.LogisticsClientConfig;
 import com.fiisadev.vs_logistics.utils.ShipUtils;
+import net.createmod.catnip.outliner.Outliner;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -37,8 +39,8 @@ public class HoseUtils {
         int segments = LogisticsClientConfig.HOSE_SEGMENTS.get();
         double radius = LogisticsClientConfig.HOSE_RADIUS.get();
 
-
         Vec3[] centers = new Vec3[segments + 1];
+        Vec3 origin = Vec3.atLowerCornerOf(originPos);
 
         Ship ship = ValkyrienSkies.getShipManagingBlock(level, originPos);
 
@@ -52,7 +54,6 @@ public class HoseUtils {
             Vec3 point = bezier(start, p1, p2, end, t);
             float slackAmount = (float) (Math.sin(Math.PI * t) * dist * 0.2);
 
-
             centers[i] = point.add(up.scale(-slackAmount));
         }
 
@@ -63,27 +64,13 @@ public class HoseUtils {
 
             Vec3 worldPoint, worldLastPoint;
             if (ship != null) {
-                Vector3d jomlPos = new Vector3d(
-                        localPoint.x + originPos.getX(),
-                        localPoint.y + originPos.getY(),
-                        localPoint.z + originPos.getZ()
-                );
-                jomlPos = ship.getShipToWorld().transformPosition(jomlPos);
-                worldPoint = new Vec3(jomlPos.x, jomlPos.y, jomlPos.z);
-
-                Vector3d jomlLastPos = new Vector3d(
-                        lastPoint.x + originPos.getX(),
-                        lastPoint.y + originPos.getY(),
-                        lastPoint.z + originPos.getZ()
-                );
-                jomlLastPos = ship.getShipToWorld().transformPosition(jomlLastPos);
-                worldLastPoint = new Vec3(jomlLastPos.x, jomlLastPos.y, jomlLastPos.z);
+                worldPoint = ShipUtils.shipToWorld(ship, localPoint.add(origin));
+                worldLastPoint = ShipUtils.shipToWorld(ship, lastPoint.add(origin));
             } else {
                 worldPoint = localPoint.add(Vec3.atLowerCornerOf(originPos));
                 worldLastPoint = lastPoint.add(Vec3.atLowerCornerOf(originPos));
             }
 
-            // Raycast in World Space
             Vec3 rayStart = worldPoint.multiply(1, 0, 1).add(0, Math.max(worldPoint.y, worldLastPoint.y), 0);
             Vec3 rayEnd = worldPoint.subtract(0, radius, 0);
 
@@ -99,39 +86,14 @@ public class HoseUtils {
                 Vec3 worldHitPos = hit.getLocation();
                 Vec3 adjustedLocal;
 
-                if (ship != null) {
-                    // Convert World Hit back to Ship Local
-                    Vector3d jomlHit = new Vector3d(worldHitPos.x, worldHitPos.y, worldHitPos.z);
-                    ship.getWorldToShip().transformPosition(jomlHit);
-                    // Subtract origin to get back to renderer-relative space
-                    adjustedLocal = new Vec3(
-                            jomlHit.x - originPos.getX(),
-                            jomlHit.y - originPos.getY(),
-                            jomlHit.z - originPos.getZ()
-                    );
-                } else {
-                    adjustedLocal = new Vec3(
-                            worldHitPos.x - originPos.getX(),
-                            worldHitPos.y - originPos.getY(),
-                            worldHitPos.z - originPos.getZ()
-                    );
-                }
+                if (ship != null)
+                    adjustedLocal = ShipUtils.worldToShip(ship, worldHitPos).subtract(origin);
+                else
+                    adjustedLocal = worldHitPos.subtract(origin);
+
                 centers[i] = adjustedLocal.add(up.scale(radius));
             }
         }
-
-        // 3. Smooth the curve to remove sharp kinks
-        Vec3[] smoothed = new Vec3[segments + 1];
-        for (int i = 0; i <= segments; i++) {
-            Vec3 prev = i == 0 ? centers[i] : centers[i - 1];
-            Vec3 next = i == segments ? centers[i] : centers[i + 1];
-            smoothed[i] = new Vec3(
-                    centers[i].x,
-                    (prev.y + centers[i].y + next.y) / 3f,
-                    centers[i].z
-            );
-        }
-        centers = smoothed;
 
         return centers;
     }

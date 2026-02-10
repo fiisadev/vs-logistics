@@ -51,7 +51,7 @@ public record PlayerHandler(FluidPumpBlockEntity fluidPump, UUID playerId) imple
 
         float bodyRotation = player.yBodyRotO + (player.yBodyRot - player.yBodyRotO) * partialTicks;
 
-        Vec3 nozzlePos = new Vec3(-0.38, 0.783, -0.03);
+        Vec3 nozzlePos = new Vec3(-0.35, 0.72, -0.03);
 
         if (player.isCrouching())
             nozzlePos = nozzlePos.add(0, -0.33, 0);
