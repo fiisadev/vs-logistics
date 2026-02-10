@@ -11,5 +11,6 @@ public class LogisticsPonders {
         PonderSceneRegistrationHelper<ItemProviderEntry<?>> HELPER = helper.withKeyFunction(RegistryEntry::getId);
 
         HELPER.addStoryBoard(LogisticsBlocks.FLUID_PORT, "fluid_port", LogisticsPonderScenes::fluidPortTutorial);
+        HELPER.addStoryBoard(LogisticsBlocks.FLUID_PORT, "fluid_port_2", LogisticsPonderScenes::fluidPort2Tutorial);
     }
 }

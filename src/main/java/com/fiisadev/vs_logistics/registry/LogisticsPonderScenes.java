@@ -7,7 +7,6 @@ import com.fiisadev.vs_logistics.content.pipe_wrench.PipeWrenchItem;
 import com.simibubi.create.AllFluids;
 import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
-import net.createmod.catnip.data.Pair;
 import net.createmod.catnip.math.Pointing;
 import net.createmod.ponder.api.PonderPalette;
 import net.createmod.ponder.api.scene.SceneBuilder;
@@ -15,7 +14,7 @@ import net.createmod.ponder.api.scene.SceneBuildingUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 
@@ -159,6 +158,44 @@ public class LogisticsPonderScenes {
         }
 
         builder.idle(20);
+
+        scene.markAsFinished();
+    }
+
+    public static void fluidPort2Tutorial(SceneBuilder builder, SceneBuildingUtil util) {
+        CreateSceneBuilder scene = new CreateSceneBuilder(builder);
+        scene.title("fluid_port_2", "Ship-to-World Logistics");
+        scene.showBasePlate();
+
+        // Define relevant positions based on your section selection
+        BlockPos portPos = util.grid().at(3, 1, 2);
+        BlockPos pumpPos = util.grid().at(3, 1, 1);
+
+        builder.idle(10);
+        // Show the main port assembly
+        scene.world().showSection(util.select().fromTo(3, 1, 1, 3, 1, 3), Direction.DOWN);
+        builder.idle(10);
+        scene.world().showSection(util.select().fromTo(3, 2, 2, 3, 2, 3), Direction.DOWN);
+
+        builder.idle(20);
+
+        // Instruction 1: Linking Constraint
+        scene.overlay().showText(60)
+                .text("Fluid Port linking only works once the VS Ship has been assembled.")
+                .attachKeyFrame()
+                .pointAt(util.vector().topOf(portPos))
+                .placeNearTarget();
+
+        builder.idle(70);
+
+        // Instruction 2: Ship to World transfer
+        scene.overlay().showText(80)
+                .text("For ship-to-world transfer, fluids must be actively pumped out of the Port.")
+                .attachKeyFrame()
+                .pointAt(util.vector().blockSurface(pumpPos, Direction.WEST))
+                .placeNearTarget();
+
+        builder.idle(90);
 
         scene.markAsFinished();
     }

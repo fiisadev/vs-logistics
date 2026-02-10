@@ -11,5 +11,9 @@
   "vs_logistics.ponder.fluid_port.text_4": "PUSH",
   "vs_logistics.ponder.fluid_port.text_5": "PULL",
   "vs_logistics.ponder.fluid_port.text_6": "EQUALIZE",
-  "vs_logistics.ponder.fluid_port.text_7": "EQUALIZE"
+  "vs_logistics.ponder.fluid_port.text_7": "EQUALIZE",
+
+  "vs_logistics.ponder.fluid_port_2.header": "Fluid Port ship-to-world",
+  "vs_logistics.ponder.fluid_port_2.text_1": "Fluid Port linking only works once the VS Ship has been assembled.",
+  "vs_logistics.ponder.fluid_port_2.text_2": "For ship-to-world transfer, fluids must be actively pumped out of the Port."
 }
