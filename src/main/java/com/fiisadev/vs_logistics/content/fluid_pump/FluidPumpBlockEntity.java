@@ -173,6 +173,14 @@ public class FluidPumpBlockEntity extends SmartBlockEntity implements IHaveGoggl
         }
     }
 
+    public SmartFluidTank getFluidTank() {
+        return fluidTank;
+    }
+
+    public boolean isDisabled() {
+        return level.hasNeighborSignal(getBlockPos());
+    }
+
     public void pushFluid(@NotNull IFluidHandler dest) {
         FluidStack simulatedExtract = fluidTank.drain(LogisticsCommonConfig.PUMP_RATE.get(), IFluidHandler.FluidAction.SIMULATE);
         if (simulatedExtract.isEmpty()) return;
@@ -216,7 +224,7 @@ public class FluidPumpBlockEntity extends SmartBlockEntity implements IHaveGoggl
 
         if (pumpHandler == null) return;
 
-        if (level.hasNeighborSignal(getBlockPos()))
+        if (isDisabled())
             return;
 
         switch (getMode()) {

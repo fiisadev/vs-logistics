@@ -373,7 +373,7 @@ public class FluidPortBlockEntity extends SmartBlockEntity implements IHaveGoggl
         super.onLoad();
 
         if (fluidCapability == null || !fluidCapability.isPresent()) {
-            fluidHandler = new FluidPortFluidHandler(targetMap, level, this::onFluidStackChanged);
+            fluidHandler = new FluidPortFluidHandler(targetMap, level, this::onFluidStackChanged, () -> fluidPumpPos);
             fluidCapability = LazyOptional.of(() -> fluidHandler);
         }
     }

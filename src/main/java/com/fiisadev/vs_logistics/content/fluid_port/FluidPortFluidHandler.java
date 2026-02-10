@@ -1,5 +1,7 @@
 package com.fiisadev.vs_logistics.content.fluid_port;
 
+import com.fiisadev.vs_logistics.config.LogisticsCommonConfig;
+import com.fiisadev.vs_logistics.content.fluid_pump.FluidPumpBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -9,16 +11,19 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 public class FluidPortFluidHandler implements IFluidHandler {
     private final Level level;
     private final Map<BlockPos, FluidPortTarget> targetMap;
     private final Runnable updateCallback;
+    private final Supplier<BlockPos> fluidPumpSup;
 
-    public FluidPortFluidHandler(Map<BlockPos, FluidPortTarget> targetMap, Level level, Runnable updateCallback) {
+    public FluidPortFluidHandler(Map<BlockPos, FluidPortTarget> targetMap, Level level, Runnable updateCallback, Supplier<BlockPos> fluidPumpSup) {
         this.targetMap = targetMap;
         this.level = level;
         this.updateCallback = updateCallback;
+        this.fluidPumpSup = fluidPumpSup;
     }
 
     private List<IFluidHandler> getHandlers() {
@@ -105,32 +110,51 @@ public class FluidPortFluidHandler implements IFluidHandler {
     public int fill(FluidStack resource, FluidAction action) {
         if (resource.isEmpty()) return 0;
 
-        int remaining = resource.getAmount();
+        BlockPos pumpPos = fluidPumpSup.get();
+        FluidPumpBlockEntity pump = null;
+        int currentRateLimit = Integer.MAX_VALUE;
+
+        if (pumpPos != null && level.getBlockEntity(pumpPos) instanceof FluidPumpBlockEntity p) {
+            if (p.isDisabled()) return 0;
+            pump = p;
+            currentRateLimit = LogisticsCommonConfig.PUMP_RATE.get();
+        }
+
+        int maxToFill = Math.min(resource.getAmount(), currentRateLimit);
+        if (maxToFill <= 0) return 0;
+
+        int remaining = maxToFill;
         int filledTotal = 0;
 
-        for (IFluidHandler handler : getHandlers()) {
-            for (int tank = 0; tank < handler.getTanks(); tank++) {
+        if (pump != null) {
+            IFluidHandler pumpHandler = pump.getFluidTank();
+
+            FluidStack toFillPump = resource.copy();
+            toFillPump.setAmount(remaining);
+
+            int filledInPump = pumpHandler.fill(toFillPump, action);
+            filledTotal += filledInPump;
+            remaining -= filledInPump;
+        }
+
+        if (remaining > 0) {
+            for (IFluidHandler handler : getHandlers()) {
                 if (remaining <= 0) break;
 
-                FluidStack existing = handler.getFluidInTank(tank);
+                FluidStack toFillNetwork = resource.copy();
+                toFillNetwork.setAmount(remaining);
 
-                if (!existing.isEmpty() && !existing.isFluidEqual(resource)) {
-                    continue;
-                }
-
-                FluidStack toFill = resource.copy();
-                toFill.setAmount(remaining);
-
-                int filled = handler.fill(toFill, action);
+                int filled = handler.fill(toFillNetwork, action);
                 if (filled > 0) {
-                    remaining -= filled;
                     filledTotal += filled;
+                    remaining -= filled;
                 }
             }
         }
 
-        if (filledTotal > 0)
+        if (filledTotal > 0 && action.execute()) {
             updateCallback.run();
+        }
 
         return filledTotal;
     }
@@ -139,20 +163,43 @@ public class FluidPortFluidHandler implements IFluidHandler {
     public @NotNull FluidStack drain(FluidStack resource, FluidAction action) {
         if (resource.isEmpty()) return FluidStack.EMPTY;
 
-        int remaining = resource.getAmount();
+        BlockPos pumpPos = fluidPumpSup.get();
+        FluidPumpBlockEntity pump = null;
+        int currentRateLimit = Integer.MAX_VALUE;
+
+        if (pumpPos != null && level.getBlockEntity(pumpPos) instanceof FluidPumpBlockEntity p) {
+            if (p.isDisabled()) return FluidStack.EMPTY;
+            pump = p;
+            currentRateLimit = LogisticsCommonConfig.PUMP_RATE.get();
+        }
+
+        int maxToDrain = Math.min(resource.getAmount(), currentRateLimit);
+        if (maxToDrain <= 0) return FluidStack.EMPTY;
+
+        int remaining = maxToDrain;
         FluidStack drainedTotal = FluidStack.EMPTY;
 
-        for (IFluidHandler handler : getHandlers()) {
-            for (int tank = 0; tank < handler.getTanks(); tank++) {
+        if (pump != null) {
+            IFluidHandler pumpHandler = pump.getFluidTank();
+
+            FluidStack pumpRequest = resource.copy();
+            pumpRequest.setAmount(remaining);
+
+            FluidStack fromPump = pumpHandler.drain(pumpRequest, action);
+            if (!fromPump.isEmpty()) {
+                drainedTotal = fromPump.copy();
+                remaining -= fromPump.getAmount();
+            }
+        }
+
+        if (remaining > 0) {
+            for (IFluidHandler handler : getHandlers()) {
                 if (remaining <= 0) break;
 
-                FluidStack existing = handler.getFluidInTank(tank);
-                if (!existing.isFluidEqual(resource)) continue;
+                FluidStack networkRequest = resource.copy();
+                networkRequest.setAmount(remaining);
 
-                FluidStack toDrain = resource.copy();
-                toDrain.setAmount(remaining);
-
-                FluidStack drained = handler.drain(toDrain, action);
+                FluidStack drained = handler.drain(networkRequest, action);
                 if (drained.isEmpty()) continue;
 
                 if (drainedTotal.isEmpty()) {
@@ -165,8 +212,9 @@ public class FluidPortFluidHandler implements IFluidHandler {
             }
         }
 
-        if (drainedTotal.getAmount() > 0)
+        if (!drainedTotal.isEmpty() && action.execute()) {
             updateCallback.run();
+        }
 
         return drainedTotal;
     }
@@ -175,35 +223,54 @@ public class FluidPortFluidHandler implements IFluidHandler {
     public @NotNull FluidStack drain(int maxDrain, FluidAction action) {
         if (maxDrain <= 0) return FluidStack.EMPTY;
 
-        FluidStack drainedTotal = FluidStack.EMPTY;
         int remaining = maxDrain;
+        FluidStack drainedTotal = FluidStack.EMPTY;
 
-        for (IFluidHandler handler : getHandlers()) {
-            for (int tank = 0; tank < handler.getTanks(); tank++) {
-                if (remaining <= 0) break;
+        if (fluidPumpSup.get() != null) {
+            if (level.getBlockEntity(fluidPumpSup.get()) instanceof FluidPumpBlockEntity fluidPump) {
+                if (fluidPump.isDisabled()) return FluidStack.EMPTY; // Pump is off, no flow allowed
 
-                FluidStack existing = handler.getFluidInTank(tank);
-                if (existing.isEmpty()) continue;
+                remaining = Math.min(remaining, LogisticsCommonConfig.PUMP_RATE.get());
+            }
 
-                if (!drainedTotal.isEmpty() && !existing.isFluidEqual(drainedTotal)) {
-                    continue;
+            if (level.getBlockEntity(fluidPumpSup.get()) instanceof FluidPumpBlockEntity fluidPump) {
+                IFluidHandler pumpHandler = fluidPump.getFluidTank();
+                FluidStack fromPump = pumpHandler.drain(remaining, action);
+
+                if (!fromPump.isEmpty()) {
+                    drainedTotal = fromPump.copy();
+                    remaining -= fromPump.getAmount();
                 }
-
-                FluidStack drained = handler.drain(remaining, action);
-                if (drained.isEmpty()) continue;
-
-                if (drainedTotal.isEmpty()) {
-                    drainedTotal = drained.copy();
-                } else {
-                    drainedTotal.grow(drained.getAmount());
-                }
-
-                remaining -= drained.getAmount();
             }
         }
 
-        if (drainedTotal.getAmount() > 0)
+        if (remaining > 0) {
+            for (IFluidHandler handler : getHandlers()) {
+                if (remaining <= 0) break;
+
+                FluidStack drained;
+                if (drainedTotal.isEmpty()) {
+                    drained = handler.drain(remaining, action);
+                } else {
+                    FluidStack filter = drainedTotal.copy();
+                    filter.setAmount(remaining);
+                    drained = handler.drain(filter, action);
+                }
+
+                if (!drained.isEmpty()) {
+                    if (drainedTotal.isEmpty()) {
+                        drainedTotal = drained.copy();
+                    } else {
+                        drainedTotal.grow(drained.getAmount());
+                    }
+                    remaining -= drained.getAmount();
+                }
+            }
+        }
+
+        if (!drainedTotal.isEmpty() && action.execute()) {
             updateCallback.run();
+        }
 
         return drainedTotal;
     }
