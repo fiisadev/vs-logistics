@@ -20,12 +20,14 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.valkyrienskies.core.api.ships.ClientShip;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
 
+@Pseudo
 @Mixin(WireNodeRenderer.class)
 public abstract class WireNodeRendererMixin<T extends BlockEntity> implements BlockEntityRenderer<T> {
 
@@ -169,15 +171,15 @@ public abstract class WireNodeRendererMixin<T extends BlockEntity> implements Bl
             matrixStackIn.popPose();
         }
 
-        if(ClientEventHandler.clientRenderHeldWire) {
+        if (ClientEventHandler.clientRenderHeldWire) {
             LocalPlayer player = ClientMinecraftWrapper.getPlayer();
             Util.Triple<BlockPos, Integer, WireType> wireNode = Util.getWireNodeOfSpools(player.getInventory().getSelected());
-            if(wireNode == null) return;
+            if (wireNode == null) return;
 
             BlockPos nodePos = wireNode.a;
             int nodeIndex = wireNode.b;
             WireType wireType = wireNode.c;
-            if(!nodePos.equals(te.getPos())) return;
+            if (!nodePos.equals(te.getPos())) return;
 
             Vec3 d1 = te.getNodeOffset(nodeIndex);
             float ox1 = ((float) d1.x());
@@ -185,12 +187,16 @@ public abstract class WireNodeRendererMixin<T extends BlockEntity> implements Bl
             float oz1 = ((float) d1.z());
 
             Vec3 playerPos = player.getPosition(partialTicks);
-            float tx = (float)playerPos.x - te.getPos().getX();
-            float ty = (float)playerPos.y - te.getPos().getY();
-            float tz = (float)playerPos.z - te.getPos().getZ();
-            matrixStackIn.pushPose();
 
-            float dis = 0;
+            if (sourceShip != null) {
+                playerPos = ShipUtils.worldToShip(sourceShip, playerPos);
+            }
+
+            float tx = (float) (playerPos.x - te.getPos().getX());
+            float ty = (float) (playerPos.y - te.getPos().getY());
+            float tz = (float) (playerPos.z - te.getPos().getZ());
+
+            matrixStackIn.pushPose();
 
             matrixStackIn.translate(tx + .5f, ty + .5f, tz + .5f);
             wireRender(
@@ -202,7 +208,7 @@ public abstract class WireNodeRendererMixin<T extends BlockEntity> implements Bl
                     -ty + oy1,
                     -tz + oz1,
                     wireType,
-                    dis
+                    0
             );
             matrixStackIn.popPose();
         }

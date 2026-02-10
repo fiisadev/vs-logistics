@@ -34,3 +34,10 @@ mandatory = true
 versionRange = "[6.0.7,)"
 ordering = "NONE"
 side = "BOTH"
+
+[[dependencies."${mod_id}"]]
+modId = "createaddition"
+mandatory = false
+versionRange = "any"
+ordering = "AFTER"
+side = "BOTH"

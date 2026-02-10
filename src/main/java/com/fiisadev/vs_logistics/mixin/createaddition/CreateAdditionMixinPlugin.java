@@ -1,6 +1,6 @@
 package com.fiisadev.vs_logistics.mixin.createaddition;
 
-import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.loading.LoadingModList;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
@@ -11,12 +11,7 @@ public class CreateAdditionMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        try {
-            Class.forName("com.mrh0.createaddition.CreateAddition", false, this.getClass().getClassLoader());
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
+        return LoadingModList.get().getModFileById("createaddition") != null;
     }
 
     @Override public void onLoad(String mixinPackage) {}

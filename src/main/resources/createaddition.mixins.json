@@ -1,5 +1,6 @@
 {
   "required": false,
+  "minVersion": "0.8",
   "package": "com.fiisadev.vs_logistics.mixin.createaddition",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
@@ -7,6 +8,7 @@
     "WireNodeRendererMixin",
     "ConnectorTickMixin"
   ],
+  "refmap": "vs_logistics.refmap.json",
   "client": [],
   "server": [],
   "plugin": "com.fiisadev.vs_logistics.mixin.createaddition.CreateAdditionMixinPlugin"

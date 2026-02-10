@@ -12,12 +12,14 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.valkyrienskies.core.api.ships.Ship;
 import org.valkyrienskies.mod.api.ValkyrienSkies;
 
+@Pseudo
 @Mixin(AbstractConnectorBlockEntity.class)
 public abstract class ConnectorTickMixin extends BlockEntity {
     public ConnectorTickMixin(BlockEntityType<?> pType, BlockPos pPos, BlockState pBlockState) {
